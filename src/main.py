@@ -7,6 +7,7 @@ Main program file
 
 from datetime import datetime
 import numpy as np
+import argparse
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -20,18 +21,31 @@ from data import Data
 from classifiers import Classifiers
 
 # ===========================================================
+# PARSE CLI ARGS
+# ===========================================================
+parser = argparse.ArgumentParser()
+parser.add_argument('-tt', '--test-type', dest='test_type', 
+                    help="0:CROSS VAL, 1:TRAIN/TEST, 2:TRAIN/TEST-4000,\
+                    3:TRAIN/TEST-9000",
+                    choices=[0, 1, 2, 3], type=int)
+parser.add_argument('-c', '--classifier', dest='classifier', 
+                    help="Select a model to train",
+                    choices=["NN1", "nn1"], type=str, required=True)
+parser.add_argument('-v', '--verbose', dest='verbose',
+                    help="1(default) for verbosity, 0 otherwise",
+                    choices=[0, 1], type=int, default=1)
+parser.add_argument('-ns', '--no-save', dest='save_model',
+                    action="store_false", default=True)
+args = parser.parse_args()
+
+# ===========================================================
 # GLOBAL
 # ===========================================================
 
-VERBOSE = 1
-"""
- TEST_TYPE:    0=cross_validation,
-               1=train/test 
-               2=train(-4000)/test(+4000)
-               3=train(-9000)/test(+9000)
-"""
-TEST_TYPE = 1
-CLF = "NN1"
+VERBOSE = args.verbose
+TEST_TYPE = args.test_type
+CLF = args.classifier.upper()
+SAVE_MODEL = args.save_model
 
 # ===========================================================
 # DATA PREPARATION
@@ -120,9 +134,10 @@ for idx, indices in enumerate(data.fold_indices):
 # SAVE MODEL
 # ===========================================================
 
-now = datetime.now()
-timestamp = now.strftime("%d-%m-%Y--%H-%M-%s")
-model.save(f"../models/{CLF}_{TEST_TYPE}_{timestamp}")
+if SAVE_MODEL:
+    now = datetime.now()
+    timestamp = now.strftime("%d-%m-%Y--%H-%M-%s")
+    model.save(f"../models/{CLF}_{TEST_TYPE}_{timestamp}")
 
 # ===========================================================
 # VISUALISE
