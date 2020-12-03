@@ -31,9 +31,9 @@ parser.add_argument('-tt', '--test-type', dest='test_type',
 parser.add_argument('-c', '--classifier', dest='classifier', 
                     help="Select a model to train",
                     choices=["NN1", "nn1"], type=str, required=True)
-parser.add_argument('-v', '--verbose', dest='verbose',
+parser.add_argument('-nv', '--no-verbose', dest='verbose',
                     help="1(default) for verbosity, 0 otherwise",
-                    choices=[0, 1], type=int, default=1)
+                    action="store_false", default=True)
 parser.add_argument('-ns', '--no-save', dest='save_model',
                     help="Do not save the model.",
                     action="store_false", default=True)
