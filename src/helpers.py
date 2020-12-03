@@ -59,11 +59,11 @@ def show_images(images, predictions=None, size=48,
         _ax.set_yticks([])
         plt.imshow(image)
         if predicted == actual:
-            #  _a.set_title(str(Labels(predicted)), color='green', fontsize=6)
-            _ax.set_title(predicted, color='green', fontsize=6)
+            _ax.set_title(str(Labels(predicted)), color='green', fontsize=6)
+            #  _ax.set_title(predicted, color='green', fontsize=6)
         else:
-            #  _a.set_title(str(Labels(predicted)), color='red', fontsize=6)
-            _ax.set_title(predicted, color='red', fontsize=6)
+            _ax.set_title(str(Labels(predicted)), color='red', fontsize=6)
+            #  _ax.set_title(predicted, color='red', fontsize=6)
     fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
     plt.show()
 

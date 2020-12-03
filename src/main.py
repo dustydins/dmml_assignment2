@@ -5,9 +5,13 @@
 Main program file
 """
 
+import os
+import random
 from datetime import datetime
 import numpy as np
+import pandas as pd
 import argparse
+from termcolor import colored
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -15,10 +19,30 @@ from keras.layers import Dense
 from sklearn.metrics import confusion_matrix
 from sklearn.base import clone
 
+import tensorflow as tf
+
 from helpers import show_images
 from helpers import plot_confusion_matrix
+from helpers import metrics_from_confusion_matrix
 from data import Data
 from classifiers import Classifiers
+
+# ===========================================================
+# CONFIG
+# ===========================================================
+
+# suppress TensorFlow logs (Works for Linux, may need changed otherwise)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# format floats in dataframes to .2f
+pd.options.display.float_format = '{:,.2f}'.format
+
+# random seeds for reproducability
+seed_val = 20156103
+os.environ['PYTHONHASHEED']=str(seed_val)
+random.seed(seed_val)
+np.random.seed(seed_val)
+tf.random.set_seed(seed_val)
 
 # ===========================================================
 # PARSE CLI ARGS
@@ -37,6 +61,9 @@ parser.add_argument('-nv', '--no-verbose', dest='verbose',
 parser.add_argument('-ns', '--no-save', dest='save_model',
                     help="Do not save the model.",
                     action="store_false", default=True)
+parser.add_argument('-np', '--no-plots', dest='visualise',
+                    help="Do not plot results.",
+                    action="store_false", default=True)
 args = parser.parse_args()
 
 # ===========================================================
@@ -47,6 +74,7 @@ VERBOSE = args.verbose
 TEST_TYPE = args.test_type
 CLF = args.classifier.upper()
 SAVE_MODEL = args.save_model
+VISUALISE = args.visualise
 
 # ===========================================================
 # DATA PREPARATION
@@ -55,6 +83,7 @@ SAVE_MODEL = args.save_model
 # load data
 data = Data()
 
+# pre-process
 data.normalise()
 data.randomise()
 
@@ -99,9 +128,9 @@ for idx, indices in enumerate(data.fold_indices):
         fold_x_test = data.x_test
         fold_y_test = data.y_test
     elif idx != 0:
-        print("===================================================")
-        print(f"FOLD: {FOLD_NUM}")
-        print("===================================================")
+        print(colored("===================================================", "blue"))
+        print(colored(f"FOLD: {FOLD_NUM}", "blue"))
+        print(colored("===================================================", "blue"))
         fold_x_train = data.x_train[indices[0]]
         fold_x_test = data.x_train[indices[1]]
         fold_y_train = data.y_train[indices[0]]
@@ -141,12 +170,38 @@ if SAVE_MODEL:
     model.save(f"../models/{CLF}_{TEST_TYPE}_{timestamp}")
 
 # ===========================================================
+# DISPLAY RESULTS
+# ===========================================================
+
+conf_matrix = confusion_matrix(y_truths, y_preds)
+print(colored("===================================================", "yellow"))
+print(colored("CONFUSION MATRIX", "yellow"))
+print(colored("===================================================", "yellow"))
+print(colored(conf_matrix, "yellow"))
+print(colored("===================================================", "magenta"))
+print(colored("RESULTS", "magenta"))
+print(colored("===================================================", "magenta"))
+mean_acc = sum(acc_per_fold)/len(acc_per_fold)
+mean_loss = sum(loss_per_fold)/len(loss_per_fold)
+print(colored(f"Accuracy: {mean_acc}\nLoss: {mean_loss}", "magenta"))
+print(colored("---------------------------------------------------", "magenta"))
+metrics = metrics_from_confusion_matrix(conf_matrix)
+print(colored(metrics, "cyan"))
+print(colored("---------------------------------------------------", "magenta"))
+print(colored("Sums:", "cyan"))
+print(colored(metrics[["TP", "TN", "FP", "FN"]].sum(axis=0), "cyan"))
+print(colored("---------------------------------------------------", "magenta"))
+print(colored("Means:", "green"))
+print(colored(metrics[["Accuracy", "Precision", "Recall"]].mean(axis=0), "green"))
+print(colored("===================================================", "magenta"))
+
+# ===========================================================
 # VISUALISE
 # ===========================================================
 
-show_images(x_test[:10],
-            predictions=y_preds[:10],
-            ground_truths=y_truths[:10])
-
-conf_matrix = confusion_matrix(y_truths, y_preds)
-plot_confusion_matrix(conf_matrix)
+if VISUALISE:
+    show_images(x_test[:10],
+                predictions=y_preds[:10],
+                ground_truths=y_truths[:10])
+    
+    plot_confusion_matrix(conf_matrix)

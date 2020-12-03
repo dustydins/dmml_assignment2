@@ -5,8 +5,6 @@
 A collection of classifiers used for experiments
 """
 
-import numpy as np
-
 from dataclasses import dataclass
 
 from keras.models import Sequential
