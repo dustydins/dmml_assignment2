@@ -5,6 +5,7 @@
 Main program file
 """
 
+from datetime import datetime
 import numpy as np
 
 from keras.models import Sequential
@@ -29,8 +30,8 @@ VERBOSE = 1
                2=train(-4000)/test(+4000)
                3=train(-9000)/test(+9000)
 """
-TEST_TYPE = 0
-CLF = "NN_1"
+TEST_TYPE = 1
+CLF = "NN1"
 
 # ===========================================================
 # DATA PREPARATION
@@ -74,6 +75,7 @@ y_preds = []
 x_test = []
 
 FOLD_NUM = 1
+model = compile_clf()
 for idx, indices in enumerate(data.fold_indices):
     # check if not cross validation
     if not data.fold_indices[0]:
@@ -113,6 +115,14 @@ for idx, indices in enumerate(data.fold_indices):
         x_test.append(fold_x_test[idy])
 
     FOLD_NUM = FOLD_NUM + 1
+
+# ===========================================================
+# SAVE MODEL
+# ===========================================================
+
+now = datetime.now()
+timestamp = now.strftime("%d-%m-%Y--%H-%M-%s")
+model.save(f"../models/{CLF}_{TEST_TYPE}_{timestamp}")
 
 # ===========================================================
 # VISUALISE
