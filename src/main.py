@@ -21,6 +21,11 @@ from data import Data
 # ===========================================================
 
 VERBOSE = 1
+# Testing type: 0=cross_validation,
+#               1=train/test 
+#               2=train(-4000)/test(+4000)
+#               3=train(-9000)/test(+9000)
+TEST_TYPE = 3
 
 # ===========================================================
 # DATA PREPARATION
@@ -29,8 +34,12 @@ VERBOSE = 1
 data = Data()
 data.normalise()
 data.randomise()
-data.move_to_test(move_num=4000)
-#  data.cross_val()
+if TEST_TYPE == 0:
+    data.cross_val()
+elif TEST_TYPE == 2:
+    data.move_to_test(move_num=4000)
+elif TEST_TYPE == 3:
+    data.move_to_test(move_num=9000)
 
 # ===========================================================
 # MODEL PREPARATION
