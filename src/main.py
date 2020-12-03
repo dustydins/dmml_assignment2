@@ -11,29 +11,38 @@ from keras.models import Sequential
 from keras.layers import Dense
 
 from sklearn.metrics import confusion_matrix
+from sklearn.base import clone
 
 from helpers import show_images
 from helpers import plot_confusion_matrix
 from data import Data
+from classifiers import Classifiers
 
 # ===========================================================
 # GLOBAL
 # ===========================================================
 
 VERBOSE = 1
-# Testing type: 0=cross_validation,
-#               1=train/test 
-#               2=train(-4000)/test(+4000)
-#               3=train(-9000)/test(+9000)
-TEST_TYPE = 3
+"""
+ TEST_TYPE:    0=cross_validation,
+               1=train/test 
+               2=train(-4000)/test(+4000)
+               3=train(-9000)/test(+9000)
+"""
+TEST_TYPE = 0
+CLF = "NN_1"
 
 # ===========================================================
 # DATA PREPARATION
 # ===========================================================
 
+# load data
 data = Data()
+
 data.normalise()
 data.randomise()
+
+# Test type
 if TEST_TYPE == 0:
     data.cross_val()
 elif TEST_TYPE == 2:
@@ -45,19 +54,14 @@ elif TEST_TYPE == 3:
 # MODEL PREPARATION
 # ===========================================================
 
+clfs = Classifiers()
 
-def get_classifier():
+def compile_clf():
     """
-    Prepare model
+    Returns a compiled {CLF}
     """
-    clf = Sequential()
-    clf.add(Dense(128, activation='relu'))
-    clf.add(Dense(10, activation='softmax'))
-    clf.compile(optimizer='adam',
-                loss='sparse_categorical_crossentropy',
-                metrics=['accuracy'])
-    return clf
-
+    compile_clf = getattr(clfs, f"compile_{CLF}")
+    return compile_clf()
 
 # ===========================================================
 # RUN CLASSIFIER
@@ -69,7 +73,7 @@ y_truths = []
 y_preds = []
 x_test = []
 
-FOLD_NO = 1
+FOLD_NUM = 1
 for idx, indices in enumerate(data.fold_indices):
     # check if not cross validation
     if not data.fold_indices[0]:
@@ -79,7 +83,7 @@ for idx, indices in enumerate(data.fold_indices):
         fold_y_test = data.y_test
     elif idx != 0:
         print("===================================================")
-        print(f"FOLD: {FOLD_NO}")
+        print(f"FOLD: {FOLD_NUM}")
         print("===================================================")
         fold_x_train = data.x_train[indices[0]]
         fold_x_test = data.x_train[indices[1]]
@@ -88,7 +92,7 @@ for idx, indices in enumerate(data.fold_indices):
     else:
         continue
 
-    model = get_classifier()
+    model = compile_clf()
 
     # fit model
     model.fit(x=fold_x_train, y=fold_y_train, epochs=10, verbose=VERBOSE)
@@ -108,7 +112,7 @@ for idx, indices in enumerate(data.fold_indices):
         y_preds.append(fold_preds[idy])
         x_test.append(fold_x_test[idy])
 
-    FOLD_NO = FOLD_NO + 1
+    FOLD_NUM = FOLD_NUM + 1
 
 # ===========================================================
 # VISUALISE

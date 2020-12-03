@@ -94,6 +94,3 @@ class Data:
         print(f"x_test post-move: {self.x_test.shape}.")
         print(f"y_test post-move: {self.y_test.shape}.")
         print("==================================================")
-
-
-
