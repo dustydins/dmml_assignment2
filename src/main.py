@@ -35,6 +35,7 @@ parser.add_argument('-v', '--verbose', dest='verbose',
                     help="1(default) for verbosity, 0 otherwise",
                     choices=[0, 1], type=int, default=1)
 parser.add_argument('-ns', '--no-save', dest='save_model',
+                    help="Do not save the model.",
                     action="store_false", default=True)
 args = parser.parse_args()
 
