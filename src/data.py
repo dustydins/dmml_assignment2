@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy import genfromtxt
 from sklearn.model_selection import KFold
+from scipy.ndimage.interpolation import shift
 
 from helpers import randomise_sets
 
@@ -70,3 +71,29 @@ class Data:
         for train_idx, test_idx in kf_cv.split(self.x_train, self.y_train):
             self.fold_indices.append((train_idx, test_idx))
         self.fold_indices[0] = True
+
+    def move_to_test(self, move_num=0):
+        """
+        Move n instances from training set to test set
+        """
+        assert len(self.x_train) >= move_num
+        print("==================================================")
+        print(f"Moving {move_num} instances from training to test set")
+        print("==================================================")
+        print(f"x_train pre-move: {self.x_train.shape}.")
+        print(f"y_train pre-move: {self.y_train.shape}.")
+        print(f"x_test pre-move: {self.x_test.shape}.")
+        print(f"y_test pre-move: {self.y_test.shape}.")
+        self.x_test = np.append(self.x_test, self.x_train[:move_num], axis=0)
+        self.y_test = np.append(self.y_test, self.y_train[:move_num], axis=0)
+        self.x_train = np.delete(self.x_train, [range(move_num)], axis=0)
+        self.y_train = np.delete(self.y_train, [range(move_num)], axis=0)
+        print("--------------------------------------------------")
+        print(f"x_train post-move: {self.x_train.shape}.")
+        print(f"y_train post-move: {self.y_train.shape}.")
+        print(f"x_test post-move: {self.x_test.shape}.")
+        print(f"y_test post-move: {self.y_test.shape}.")
+        print("==================================================")
+
+
+

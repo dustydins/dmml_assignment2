@@ -29,6 +29,7 @@ VERBOSE = 1
 data = Data()
 data.normalise()
 data.randomise()
+data.move_to_test(move_num=4000)
 #  data.cross_val()
 
 # ===========================================================
