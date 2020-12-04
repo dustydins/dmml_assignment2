@@ -2,6 +2,13 @@
 
 ## Setup
 
+#### Conda Environment:
+
+* conda env create -f environment.yml
+* conda activate dmmlEnv
+
+#### Download data sets:
+
 * Download data sets using data/get_data.sh bash script
 * May need to create src/models/ directory to save models
 
