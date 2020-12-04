@@ -27,7 +27,14 @@ Running python main.py, the following flags/arguments should be used:
 
 E.g. `python main.py -tt 0 -c NN1`, will run 10 fold cross-validation on the NN1 Neural network
 
-## Classifiers
+## Test codes
+
+* _0_: 10 fold cross-validation
+* _1_: Original train/test split
+* _2_: 4000 instances from training set, moved to test set
+* _3_: 9000 instances from training set, moved to test set
+
+## Classifier codes
 
 * _NN1_: Baseline Neural Network
 * _DT1_: Baseline Decision Tree
