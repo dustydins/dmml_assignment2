@@ -19,5 +19,5 @@ Running python main.py, the following flags/arguments should be used:
 
 ## Classifiers
 
-* __NN1_: Baseline Neural Network
-* _DT1_: Baseline Neural Network
+* _NN1_: Baseline Neural Network
+* _DT1_: Baseline Decision Tree
