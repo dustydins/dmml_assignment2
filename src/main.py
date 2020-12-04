@@ -16,11 +16,15 @@ import argparse
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import plot_tree
 from sklearn.metrics import confusion_matrix
 
 import tensorflow as tf
+from tensorflow.python.keras.engine.sequential import Sequential
 
 from metrics import metrics_from_confusion_matrix
 from pretty_format import cprint, print_header, print_div, print_footer
@@ -58,7 +62,9 @@ parser.add_argument('-tt', '--test-type', dest='test_type',
                     choices=[0, 1, 2, 3], type=int)
 parser.add_argument('-c', '--classifier', dest='classifier',
                     help="Select a model to train",
-                    choices=["NN1", "nn1"], type=str, required=True)
+                    choices=["NN1", "nn1",
+                             "DT1", "dt1"],
+                    type=str, required=True)
 parser.add_argument('-nv', '--no-verbose', dest='verbose',
                     help="1(default) for verbosity, 0 otherwise",
                     action="store_false", default=True)
@@ -76,7 +82,7 @@ args = parser.parse_args()
 
 VERBOSE = args.verbose
 TEST_TYPE = args.test_type
-CLF = args.classifier.upper()
+CLF = args.classifier.lower()
 SAVE_MODEL = args.save_model
 VISUALISE = args.visualise
 
@@ -169,7 +175,9 @@ model = compile_clf()
 SECTION_COLOUR = "blue"
 print_header("RUNNING CLASSIFIER", SECTION_COLOUR)
 for idx, indices in enumerate(data.fold_indices):
-    # check if not cross validation
+    # ---------------------------------------------------------------------------
+    # SETUP TRAINING AND TEST SET
+    # ---------------------------------------------------------------------------
     if not data.fold_indices[0]:
         fold_x_train = data.x_train
         fold_y_train = data.y_train
@@ -186,26 +194,52 @@ for idx, indices in enumerate(data.fold_indices):
 
     model = compile_clf()
 
-    # fit model
-    model.fit(x=fold_x_train, y=fold_y_train, epochs=10, verbose=VERBOSE)
+    # ---------------------------------------------------------------------------
+    # IF NEURAL NETWORK
+    # ---------------------------------------------------------------------------
+    if isinstance(model, Sequential):
 
-    # evaluate for test set
-    test_loss, test_acc = model.evaluate(fold_x_test,
-                                         fold_y_test,
-                                         verbose=0)
-    loss_per_fold_test.append(test_loss)
-    acc_per_fold_test.append(test_acc * 100)
+        # fit model
+        model.fit(x=fold_x_train, y=fold_y_train, epochs=10, verbose=VERBOSE)
 
-    # evaluate for training set
-    train_loss, train_acc = model.evaluate(fold_x_train,
-                                           fold_y_train,
-                                           verbose=0)
-    loss_per_fold_train.append(train_loss)
-    acc_per_fold_train.append(train_acc * 100)
+        # evaluate for training and test sets
+        test_loss, test_acc = model.evaluate(fold_x_test,
+                                             fold_y_test,
+                                             verbose=0)
+        train_loss, train_acc = model.evaluate(fold_x_train,
+                                               fold_y_train,
+                                               verbose=0)
+        loss_per_fold_test.append(test_loss)
+        acc_per_fold_test.append(test_acc * 100)
+        loss_per_fold_train.append(train_loss)
+        acc_per_fold_train.append(train_acc * 100)
 
-    # predictions
-    fold_probs = model.predict(fold_x_test)
-    fold_preds = [np.argmax(instance) for instance in fold_probs]
+        # predictions
+        fold_probs = model.predict(fold_x_test)
+        fold_preds = [np.argmax(instance) for instance in fold_probs]
+
+    # ---------------------------------------------------------------------------
+    # IF DECISION TREE
+    # ---------------------------------------------------------------------------
+    elif isinstance(model, DecisionTreeClassifier):
+
+        # fit model
+        model.fit(fold_x_train, fold_y_train)
+
+        # evaluate on train and test sets
+        test_acc = model.score(fold_x_test, fold_y_test)
+        train_acc = model.score(fold_x_train, fold_y_train)
+        acc_per_fold_test.append(test_acc * 100)
+        acc_per_fold_train.append(train_acc * 100)
+        loss_per_fold_test.append(0)
+        loss_per_fold_train.append(0)
+
+        # predictions
+        fold_preds = model.predict(fold_x_test)
+
+    # ---------------------------------------------------------------------------
+    # STORE PREDICTIONS
+    # ---------------------------------------------------------------------------
     for idy, truth in enumerate(fold_y_test):
         y_truths.append(truth)
         y_preds.append(fold_preds[idy])
@@ -289,3 +323,8 @@ if VISUALISE:
 
     # display confusion matrix
     plot_confusion_matrix(conf_matrix)
+
+    # if decision tree, plot tree
+    if isinstance(model, DecisionTreeClassifier):
+        plot_tree(model)
+        plt.show()
