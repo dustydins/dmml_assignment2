@@ -10,6 +10,7 @@ Description: Collection of visualisation methods
 
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 import matplotlib.pyplot as plt
 import seaborn as sns
 from termcolor import colored
@@ -60,6 +61,7 @@ def _train_test_acc_loss_df(train_acc, train_loss, test_acc, test_loss):
     Creates a DataFrame for train/test acc/loss per fold
     """
     _df = pd.DataFrame()
+    _df["fold_num"] = list(range(1, len(train_acc)+1))
     _df["train_acc"] = train_acc
     _df["train_loss"] = train_loss
     _df["test_acc"] = test_acc
@@ -74,7 +76,8 @@ def print_train_test_acc_loss(train_acc, train_loss,
     """
     _df = _train_test_acc_loss_df(train_acc, train_loss,
                                   test_acc, test_loss)
-    print(colored(_df, colour))
+    print(colored(tabulate(_df, tablefmt='psql',
+                           headers='keys'), colour))
 
 
 def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):

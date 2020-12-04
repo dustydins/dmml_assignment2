@@ -16,6 +16,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 
 from sklearn.metrics import confusion_matrix
 
@@ -257,7 +258,8 @@ print_footer(SECTION_COLOUR)
 SECTION_COLOUR = "cyan"
 print_header("PER CLASS RESULTS", SECTION_COLOUR)
 metrics = metrics_from_confusion_matrix(conf_matrix)
-cprint(metrics, SECTION_COLOUR)
+cprint(tabulate(metrics, tablefmt='psql',
+                headers='keys'), SECTION_COLOUR)
 print_div(SECTION_COLOUR)
 cprint("Sums:", SECTION_COLOUR)
 cprint(metrics[["TP", "TN", "FP", "FN"]].sum(axis=0), SECTION_COLOUR)
