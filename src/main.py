@@ -21,11 +21,11 @@ from sklearn.base import clone
 
 import tensorflow as tf
 
-from helpers import show_images
-from helpers import plot_confusion_matrix
-from helpers import metrics_from_confusion_matrix
+from metrics import metrics_from_confusion_matrix
+from pretty_format import *
 from data import Data
 from classifiers import Classifiers
+from visualise import *
 
 # ===========================================================
 # CONFIG
@@ -84,16 +84,46 @@ VISUALISE = args.visualise
 data = Data()
 
 # pre-process
+section_colour = "green"
+print_header("PREPROCESSING", section_colour)
+cprint("Normalising data from 0-255 to 0-1.", section_colour)
 data.normalise()
+print_div(section_colour)
+cprint("Randomising sets in unison.", section_colour)
 data.randomise()
+print_div(section_colour)
 
 # Test type
 if TEST_TYPE == 0:
+    cprint("Preparing data for 10 fold cross validation", section_colour)
     data.cross_val()
 elif TEST_TYPE == 2:
+    cprint("Moving 4000 instances from training to test set", section_colour)
+    print_div(section_colour)
+    cprint(f"\tx_train pre-move: {data.x_train.shape}.", section_colour)
+    cprint(f"\ty_train pre-move: {data.y_train.shape}.", section_colour)
+    cprint(f"\tx_test pre-move: {data.x_test.shape}.", section_colour)
+    cprint(f"\ty_test pre-move: {data.y_test.shape}.", section_colour)
     data.move_to_test(move_num=4000)
+    print_div(section_colour)
+    cprint(f"\tx_train post-move: {data.x_train.shape}.", section_colour)
+    cprint(f"\ty_train post-move: {data.y_train.shape}.", section_colour)
+    cprint(f"\tx_test post-move: {data.x_test.shape}.", section_colour)
+    cprint(f"\ty_test post-move: {data.y_test.shape}.", section_colour)
 elif TEST_TYPE == 3:
+    cprint("Moving 9000 instances from training to test set", section_colour)
+    print_div(section_colour)
+    cprint(f"\tx_train pre-move: {data.x_train.shape}.", section_colour)
+    cprint(f"\ty_train pre-move: {data.y_train.shape}.", section_colour)
+    cprint(f"\tx_test pre-move: {data.x_test.shape}.", section_colour)
+    cprint(f"\ty_test pre-move: {data.y_test.shape}.", section_colour)
     data.move_to_test(move_num=9000)
+    print_div(section_colour)
+    cprint(f"\tx_train post-move: {data.x_train.shape}.", section_colour)
+    cprint(f"\ty_train post-move: {data.y_train.shape}.", section_colour)
+    cprint(f"\tx_test post-move: {data.x_test.shape}.", section_colour)
+    cprint(f"\ty_test post-move: {data.y_test.shape}.", section_colour)
+print_footer(section_colour)
 
 # ===========================================================
 # MODEL PREPARATION
@@ -112,14 +142,18 @@ def compile_clf():
 # RUN CLASSIFIER
 # ===========================================================
 
-acc_per_fold = []
-loss_per_fold = []
+acc_per_fold_test = []
+loss_per_fold_test = []
+acc_per_fold_train = []
+loss_per_fold_train = []
 y_truths = []
 y_preds = []
 x_test = []
 
 FOLD_NUM = 1
 model = compile_clf()
+section_colour = "blue"
+print_header("RUNNING CLASSIFIER", section_colour)
 for idx, indices in enumerate(data.fold_indices):
     # check if not cross validation
     if not data.fold_indices[0]:
@@ -128,9 +162,7 @@ for idx, indices in enumerate(data.fold_indices):
         fold_x_test = data.x_test
         fold_y_test = data.y_test
     elif idx != 0:
-        print(colored("===================================================", "blue"))
-        print(colored(f"FOLD: {FOLD_NUM}", "blue"))
-        print(colored("===================================================", "blue"))
+        print_header(f"FOLD: {FOLD_NUM}", section_colour)
         fold_x_train = data.x_train[indices[0]]
         fold_x_test = data.x_train[indices[1]]
         fold_y_train = data.y_train[indices[0]]
@@ -143,12 +175,19 @@ for idx, indices in enumerate(data.fold_indices):
     # fit model
     model.fit(x=fold_x_train, y=fold_y_train, epochs=10, verbose=VERBOSE)
 
-    # evaluate
+    # evaluate for test set
     test_loss, test_acc = model.evaluate(fold_x_test,
                                          fold_y_test,
                                          verbose=0)
-    loss_per_fold.append(test_loss)
-    acc_per_fold.append(test_acc * 100)
+    loss_per_fold_test.append(test_loss)
+    acc_per_fold_test.append(test_acc * 100)
+
+    # evaluate for training set
+    train_loss, train_acc = model.evaluate(fold_x_train,
+                                         fold_y_train,
+                                         verbose=0)
+    loss_per_fold_train.append(train_loss)
+    acc_per_fold_train.append(train_acc * 100)
 
     # predictions
     fold_probs = model.predict(fold_x_test)
@@ -159,6 +198,8 @@ for idx, indices in enumerate(data.fold_indices):
         x_test.append(fold_x_test[idy])
 
     FOLD_NUM = FOLD_NUM + 1
+
+print_footer(section_colour)
 
 # ===========================================================
 # SAVE MODEL
@@ -174,32 +215,51 @@ if SAVE_MODEL:
 # ===========================================================
 
 conf_matrix = confusion_matrix(y_truths, y_preds)
-print(colored("===================================================", "yellow"))
-print(colored("CONFUSION MATRIX", "yellow"))
-print(colored("===================================================", "yellow"))
-print(colored(conf_matrix, "yellow"))
-print(colored("===================================================", "magenta"))
-print(colored("RESULTS", "magenta"))
-print(colored("===================================================", "magenta"))
-mean_acc = sum(acc_per_fold)/len(acc_per_fold)
-mean_loss = sum(loss_per_fold)/len(loss_per_fold)
-print(colored(f"Accuracy: {mean_acc}\nLoss: {mean_loss}", "magenta"))
-print(colored("---------------------------------------------------", "magenta"))
+
+section_colour = "yellow"
+print_header("CONFUSION MATRIX", section_colour)
+cprint(conf_matrix, section_colour)
+print_footer(section_colour)
+
+section_colour = "magenta"
+print_header("RESULTS PER FOLD", section_colour)
+print_train_test_acc_loss(acc_per_fold_train, loss_per_fold_train,
+                         acc_per_fold_test, loss_per_fold_test)
+if TEST_TYPE == 0:
+    mean_acc_train = sum(acc_per_fold_train)/len(acc_per_fold_train)
+    mean_loss_train = sum(loss_per_fold_train)/len(loss_per_fold_train)
+    cprint("Training Set Mean:", section_colour)
+    cprint(f"\tAccuracy: {mean_acc_train:.2f}", section_colour)
+    cprint(f"\tLoss: {mean_loss_train:.2f}", section_colour)
+    mean_acc_test = sum(acc_per_fold_test)/len(acc_per_fold_test)
+    mean_loss_test = sum(loss_per_fold_test)/len(loss_per_fold_test)
+    cprint("Test Set Mean:", section_colour)
+    cprint(f"\tAccuracy: {mean_acc_test:.2f}", section_colour)
+    cprint(f"\tLoss: {mean_loss_test:.2f}", section_colour)
+print_footer(section_colour)
+
+section_colour = "cyan"
+print_header("PER CLASS RESULTS", section_colour)
 metrics = metrics_from_confusion_matrix(conf_matrix)
-print(colored(metrics, "cyan"))
-print(colored("---------------------------------------------------", "magenta"))
-print(colored("Sums:", "cyan"))
-print(colored(metrics[["TP", "TN", "FP", "FN"]].sum(axis=0), "cyan"))
-print(colored("---------------------------------------------------", "magenta"))
-print(colored("Means:", "green"))
-print(colored(metrics[["Accuracy", "Precision", "Recall"]].mean(axis=0), "green"))
-print(colored("===================================================", "magenta"))
+cprint(metrics, section_colour)
+print_div(section_colour)
+cprint("Sums:", section_colour)
+cprint(metrics[["TP", "TN", "FP", "FN"]].sum(axis=0), section_colour)
+print_div(section_colour)
+cprint("Means:", section_colour)
+cprint(metrics[["Accuracy", "Precision", "Recall"]].mean(axis=0), section_colour)
+print_footer(section_colour)
 
 # ===========================================================
 # VISUALISE
 # ===========================================================
 
 if VISUALISE:
+    if TEST_TYPE == 0:
+        plot_train_test_acc_loss(acc_per_fold_train,
+                                 loss_per_fold_train,
+                                 acc_per_fold_test,
+                                 loss_per_fold_test)
     show_images(x_test[:10],
                 predictions=y_preds[:10],
                 ground_truths=y_truths[:10])

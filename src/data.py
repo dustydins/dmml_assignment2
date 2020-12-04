@@ -5,24 +5,59 @@
 Handles the data concerned with the coursework
 """
 
+import enum
 from dataclasses import dataclass
 import numpy as np
 from numpy import genfromtxt
 from sklearn.model_selection import KFold
 from scipy.ndimage.interpolation import shift
 
-from helpers import randomise_sets
+from preprocess import randomise_sets
+from pretty_format import *
 
 np.random.seed(42)
 
+
+class Labels(enum.Enum):
+    """ enum for class labels """
+    SpeedLimit20 = 0
+    SpeedLimit30 = 1
+    SpeedLimit50 = 2
+    SpeedLimit60 = 3
+    SpeedLimit70 = 4
+    LeftTurn = 5
+    RightTurn = 6
+    BewarePedastrianCrossing = 7
+    BewareChildren = 8
+    BewareCycleRouteAhead = 9
+
+    def __str__(self):
+        return str(self.name)
+
+
 # filepaths
-print("Gathering data... One moment.")
+print_header("GATHERING DATA")
 
 X_TRAIN_GR_SMPL = "../data/x_train_gr_smpl.csv"
 X_TEST_GR_SMPL = "../data/x_test_gr_smpl.csv"
 Y_TRAIN_SMPL = "../data/y_train_smpl.csv"
 Y_TEST_SMPL = "../data/y_test_smpl.csv"
 
+class Labels(enum.Enum):
+    """ enum for class labels """
+    SpeedLimit20 = 0
+    SpeedLimit30 = 1
+    SpeedLimit50 = 2
+    SpeedLimit60 = 3
+    SpeedLimit70 = 4
+    LeftTurn = 5
+    RightTurn = 6
+    BewarePedastrianCrossing = 7
+    BewareChildren = 8
+    BewareCycleRouteAhead = 9
+
+    def __str__(self):
+        return str(self.name)
 
 @dataclass
 class Data:
@@ -39,10 +74,8 @@ class Data:
         """
         Normalises data from 0-255 to 0-1
         """
-        print("Normalising data from range 0-255, to 0-1...")
         self.x_train /= 255
         self.x_test /= 255
-        print("\tNormalisation: complete.")
 
     def randomise(self):
         """ randomises sets"""
@@ -77,20 +110,7 @@ class Data:
         Move n instances from training set to test set
         """
         assert len(self.x_train) >= move_num
-        print("==================================================")
-        print(f"Moving {move_num} instances from training to test set")
-        print("==================================================")
-        print(f"x_train pre-move: {self.x_train.shape}.")
-        print(f"y_train pre-move: {self.y_train.shape}.")
-        print(f"x_test pre-move: {self.x_test.shape}.")
-        print(f"y_test pre-move: {self.y_test.shape}.")
         self.x_test = np.append(self.x_test, self.x_train[:move_num], axis=0)
         self.y_test = np.append(self.y_test, self.y_train[:move_num], axis=0)
         self.x_train = np.delete(self.x_train, [range(move_num)], axis=0)
         self.y_train = np.delete(self.y_train, [range(move_num)], axis=0)
-        print("--------------------------------------------------")
-        print(f"x_train post-move: {self.x_train.shape}.")
-        print(f"y_train post-move: {self.y_train.shape}.")
-        print(f"x_test post-move: {self.x_test.shape}.")
-        print(f"y_test post-move: {self.y_test.shape}.")
-        print("==================================================")
