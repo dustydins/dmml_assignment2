@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-Handles the data concerned with the coursework
+data.py
+Author: Arran Dinsmore
+Last updated: 04/12/2020
+Description: Handles loading, processing, & retrieval for
+             data sets concerned with the project
 """
 
 import enum
@@ -10,10 +14,9 @@ from dataclasses import dataclass
 import numpy as np
 from numpy import genfromtxt
 from sklearn.model_selection import KFold
-from scipy.ndimage.interpolation import shift
 
 from preprocess import randomise_sets
-from pretty_format import *
+from pretty_format import print_header
 
 np.random.seed(42)
 
@@ -43,21 +46,6 @@ X_TEST_GR_SMPL = "../data/x_test_gr_smpl.csv"
 Y_TRAIN_SMPL = "../data/y_train_smpl.csv"
 Y_TEST_SMPL = "../data/y_test_smpl.csv"
 
-class Labels(enum.Enum):
-    """ enum for class labels """
-    SpeedLimit20 = 0
-    SpeedLimit30 = 1
-    SpeedLimit50 = 2
-    SpeedLimit60 = 3
-    SpeedLimit70 = 4
-    LeftTurn = 5
-    RightTurn = 6
-    BewarePedastrianCrossing = 7
-    BewareChildren = 8
-    BewareCycleRouteAhead = 9
-
-    def __str__(self):
-        return str(self.name)
 
 @dataclass
 class Data:

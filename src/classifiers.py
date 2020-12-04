@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-A collection of classifiers used for experiments
+classifiers.py
+Author: Arran Dinsmore
+Last updated: 04/12/2020
+Description: Collection of classifiers and methods to compile them
 """
 
 from dataclasses import dataclass
@@ -24,6 +27,6 @@ class Classifiers:
         self.NN1.add(Dense(128, activation='relu'))
         self.NN1.add(Dense(10, activation='softmax'))
         self.NN1.compile(optimizer='adam',
-                     loss='sparse_categorical_crossentropy',
-                     metrics=['accuracy'])
+                         loss='sparse_categorical_crossentropy',
+                         metrics=['accuracy'])
         return self.NN1

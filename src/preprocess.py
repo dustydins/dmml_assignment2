@@ -2,10 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """
-Module for preprocessing image data
+preprocess.py
+Author: Arran Dinsmore
+Last updated: 04/12/2020
+Description: A collection of helper functions for
+             preprocessing data
 """
 
 import numpy as np
+import cv2
 
 
 def randomise_sets(set1, *others):

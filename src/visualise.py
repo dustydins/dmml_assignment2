@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Collection of visualisation methods
+visualise.py
+Author: Arran Dinsmore
+Last updated: 04/12/2020
+Description: Collection of visualisation methods
 """
 
 import numpy as np
@@ -66,7 +69,7 @@ def _train_test_acc_loss_df(train_acc, train_loss, test_acc, test_loss):
 
 def print_train_test_acc_loss(train_acc, train_loss,
                               test_acc, test_loss, colour="magenta"):
-    """ 
+    """
     Prints train/test accuracy and loss for each fold
     """
     _df = _train_test_acc_loss_df(train_acc, train_loss,
@@ -75,7 +78,7 @@ def print_train_test_acc_loss(train_acc, train_loss,
 
 
 def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):
-    """ 
+    """
     Prints train/test accuracy and loss for each fold
     """
     _df = _train_test_acc_loss_df(train_acc, train_loss,

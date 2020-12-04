@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-Module for handling metric calculations and presentation
+metrics.py
+Author: Arran Dinsmore
+Last updated: 04/12/2020
+Description: Module for handling metric calculations
+             & presentation.
 """
 
 import warnings
