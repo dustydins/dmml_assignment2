@@ -24,6 +24,9 @@ Running python main.py, the following flags/arguments should be used:
 | -ns or --no-save | no args | If flag present, will not save model |
 | -np or --no-plot | no args | If flag present, will not produce plots |
 
+
+E.g. `python main.py -tt 0 -c NN1`, will run 10 fold cross-validation on the NN1 Neural network
+
 ## Classifiers
 
 * _NN1_: Baseline Neural Network
