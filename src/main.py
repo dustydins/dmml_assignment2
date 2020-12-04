@@ -179,11 +179,13 @@ for idx, indices in enumerate(data.fold_indices):
     # SETUP TRAINING AND TEST SET
     # ---------------------------------------------------------------------------
     if not data.fold_indices[0]:
+        # if not cross validation, just use train/test sets
         fold_x_train = data.x_train
         fold_y_train = data.y_train
         fold_x_test = data.x_test
         fold_y_test = data.y_test
     elif idx != 0:
+        # if cross validation, use indices to create new train/test sets
         print_header(f"FOLD: {FOLD_NUM}", SECTION_COLOUR)
         fold_x_train = data.x_train[indices[0]]
         fold_x_test = data.x_train[indices[1]]
