@@ -1,6 +1,11 @@
-# dmml_assignment2
+# Data Mining & Machine Learning - Coursework 2
 
-# CLI Options
+## Setup
+
+* Download data sets using data/get_data.sh bash script
+* May need to create src/models/ directory to save models
+
+## CLI Options
 
 Running python main.py, the following flags/arguments should be used:
 
@@ -11,3 +16,8 @@ Running python main.py, the following flags/arguments should be used:
 | -nv or --no-verbose | no args | Turns verbose mode off |
 | -ns or --no-save | no args | If flag present, will not save model |
 | -np or --no-plot | no args | If flag present, will not produce plots |
+
+## Classifiers
+
+* __NN1_: Baseline Neural Network
+* _DT1_: Baseline Neural Network
