@@ -4,7 +4,7 @@
 
 #### Conda Environment:
 
-* conda env create -f environment.yml
+* conda env create -f conda_env.yml
 * conda activate dmmlEnv
 
 #### Download data sets:
