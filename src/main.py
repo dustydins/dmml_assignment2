@@ -253,7 +253,7 @@ print_footer(SECTION_COLOUR)
 # SAVE MODEL
 # ===========================================================
 
-if SAVE_MODEL:
+if SAVE_MODEL and isinstance(model, Sequential):
     now = datetime.now()
     timestamp = now.strftime("%d-%m-%Y--%H-%M-%s")
     model.save(f"../models/{CLF}_{TEST_TYPE}_{timestamp}")
