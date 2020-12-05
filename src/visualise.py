@@ -17,6 +17,16 @@ from termcolor import colored
 
 from data import Labels
 
+NUM_FOLDS = 10
+
+
+def is_unique(column):
+    """
+    Checks if a pd.DataFrame column's values are all the same
+    """
+    arr = column.to_numpy()
+    return (arr[0] == arr).all()
+
 
 def show_images(images, predictions=None, size=48,
                 ground_truths=None):
@@ -56,36 +66,25 @@ def show_images(images, predictions=None, size=48,
     plt.show()
 
 
-def _train_test_acc_loss_df(train_acc, train_loss, test_acc, test_loss):
+def _train_test_acc_loss_df(train_acc, train_loss,
+                            test_acc, test_loss,
+                            model="N/A"):
     """
     Creates a DataFrame for train/test acc/loss per fold
     """
     _df = pd.DataFrame()
-    _df["fold_num"] = list(range(1, len(train_acc)+1))
-    _df["train_acc"] = train_acc
-    _df["train_loss"] = train_loss
-    _df["test_acc"] = test_acc
-    _df["test_loss"] = test_loss
-    return _df
-
-
-def print_train_test_acc_loss(train_acc, train_loss,
-                              test_acc, test_loss, colour="magenta"):
-    """
-    Prints train/test accuracy and loss for each fold
-    """
-    _df = _train_test_acc_loss_df(train_acc, train_loss,
-                                  test_acc, test_loss)
-    print(colored(tabulate(_df, tablefmt='psql',
-                           headers='keys'), colour))
-
-
-def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):
-    """
-    Prints train/test accuracy and loss for each fold
-    """
-    _df = _train_test_acc_loss_df(train_acc, train_loss,
-                                  test_acc, test_loss)
+    _df["fold_num"] = list(range(1, NUM_FOLDS+1))
+    if len(train_acc) == NUM_FOLDS:
+        _df["train_acc"] = train_acc
+        _df["train_loss"] = train_loss
+        _df["test_acc"] = test_acc
+        _df["test_loss"] = test_loss
+    else:
+        _df["train_acc"] = [train_acc[0] for idx in range(NUM_FOLDS)]
+        _df["train_loss"] = [train_loss[0] for idx in range(NUM_FOLDS)]
+        _df["test_acc"] = [test_acc[0] for idx in range(NUM_FOLDS)]
+        _df["test_loss"] = [test_loss[0] for idx in range(NUM_FOLDS)]
+    _df["model"] = [model for idx in range(NUM_FOLDS)]
 
     # melt and add column for metric used
     acc_df = _df[["fold_num",
@@ -97,24 +96,50 @@ def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):
                    "train_loss",
                    "test_loss"]].melt(id_vars=["fold_num"]).copy()
     loss_df["metric"] = "loss"
-    _df = pd.concat([acc_df, loss_df])
+    melt_df = pd.concat([acc_df, loss_df])
 
     # add column for data set used
-    train_df = _df[_df["variable"].str.contains("train")].copy()
+    train_df = melt_df[melt_df["variable"].str.contains("train")].copy()
     train_df["set"] = "train"
-    test_df = _df[_df["variable"].str.contains("test")].copy()
+    test_df = melt_df[melt_df["variable"].str.contains("test")].copy()
     test_df["set"] = "test"
-    _df = pd.concat([train_df, test_df])
+    melt_df = pd.concat([train_df, test_df])
+    return _df, melt_df, loss_df
+
+
+def print_train_test_acc_loss(train_acc, train_loss,
+                              test_acc, test_loss, colour="magenta"):
+    """
+    Prints train/test accuracy and loss for each fold
+    """
+    _df = _train_test_acc_loss_df(train_acc, train_loss,
+                                  test_acc, test_loss)
+
+    if is_unique(_df[0]["train_acc"]):
+        to_print_df = _df[0].drop(["model"], axis=1).head(1)
+    else:
+        to_print_df = _df[0].drop(["model"], axis=1)
+
+    print(colored(tabulate(to_print_df, tablefmt='psql',
+                           headers='keys'), colour))
+
+
+def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):
+    """
+    Prints train/test accuracy and loss for each fold
+    """
+    _df, melt_df, loss_df = _train_test_acc_loss_df(train_acc, train_loss,
+                                                    test_acc, test_loss)
 
     # plot both loss and acc if NN, otherwise just acc
     if not (loss_df["value"] == 0).all():
-        _ax = sns.lineplot(data=_df, x="fold_num",
+        _ax = sns.lineplot(data=melt_df, x="fold_num",
                            y="value", hue="set", style="metric")
         _ax.set(xlabel="Fold Number", ylabel="Metric Value",
                 title="Train/Test Accuracy/Loss Per Fold")
     else:
-        _df = _df[_df["metric"] == "accuracy"]
-        _ax = sns.lineplot(data=_df, x="fold_num",
+        melt_df = melt_df[melt_df["metric"] == "accuracy"]
+        _ax = sns.lineplot(data=melt_df, x="fold_num",
                            y="value", hue="set")
         _ax.set(xlabel="Fold Number", ylabel="Accuracy",
                 title="Train/Test Accuracy Per Fold")

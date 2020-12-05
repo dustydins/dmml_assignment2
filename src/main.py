@@ -311,12 +311,11 @@ print_footer(SECTION_COLOUR)
 
 if VISUALISE:
 
-    if TEST_TYPE == 0:
-        # if cross validation, plot each fold's accuracy/loss
-        plot_train_test_acc_loss(acc_per_fold_train,
-                                 loss_per_fold_train,
-                                 acc_per_fold_test,
-                                 loss_per_fold_test)
+    # plot each fold's accuracy/loss on train and test sets
+    plot_train_test_acc_loss(acc_per_fold_train,
+                             loss_per_fold_train,
+                             acc_per_fold_test,
+                             loss_per_fold_test)
 
     # display first 10 images with prediction labels
     show_images(x_test[:10],
