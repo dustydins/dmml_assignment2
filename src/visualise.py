@@ -86,6 +86,32 @@ def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):
     """
     _df = _train_test_acc_loss_df(train_acc, train_loss,
                                   test_acc, test_loss)
+    acc_df = _df[["fold_num",
+                  "train_acc",
+                  "test_acc"]].melt(id_vars=["fold_num"]).copy()
+    acc_df["metric"] = "accuracy"
+    acc_df["value"] = acc_df["value"] / 100
+    loss_df = _df[["fold_num",
+                   "train_loss",
+                   "test_loss"]].melt(id_vars=["fold_num"]).copy()
+    loss_df["metric"] = "loss"
+    _df = pd.concat([acc_df, loss_df])
+    train_df = _df[_df["variable"].str.contains("train")].copy()
+    train_df["set"] = "train"
+    test_df = _df[_df["variable"].str.contains("test")].copy()
+    test_df["set"] = "test"
+    _df = pd.concat([train_df, test_df])
+    if not (loss_df["value"] == 0).all():
+        _ax = sns.lineplot(data=_df, x="fold_num",
+                           y="value", hue="set", style="metric")
+        _ax.set(xlabel="Fold Number", ylabel="Metric Value",
+                title="Train/Test Accuracy/Loss Per Fold")
+    else:
+        _ax = sns.lineplot(data=_df, x="fold_num",
+                           y="value", hue="set", ci=None)
+        _ax.set(xlabel="Fold Number", ylabel="Accuracy",
+                title="Train/Test Accuracy Per Fold")
+    plt.show()
 
 
 def plot_confusion_matrix(conf_matrix, title="Confusion Matrix"):
