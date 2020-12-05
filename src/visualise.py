@@ -128,25 +128,28 @@ def print_train_test_acc_loss(train_acc, train_loss,
                            headers='keys'), colour))
 
 
-def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):
+def plot_train_test_acc_loss(train_acc, train_loss,
+                             test_acc, test_loss,
+                             experiment):
     """
     Prints train/test accuracy and loss for each fold
     """
     _df, melt_df, loss_df = get_train_test_acc_loss_df(train_acc, train_loss,
-                                                       test_acc, test_loss)
+                                                       test_acc, test_loss,
+                                                       experiment)
 
     # plot both loss and acc if NN, otherwise just acc
     if not (loss_df["value"] == 0).all():
         _ax = sns.lineplot(data=melt_df, x="fold_num",
-                           y="value", hue="set", style="metric")
+                           y="value", hue="metric", style="set")
         _ax.set(xlabel="Fold Number", ylabel="Metric Value",
-                title="Train/Test Accuracy/Loss Per Fold")
+                title=experiment)
     else:
         melt_df = melt_df[melt_df["metric"] == "accuracy"]
         _ax = sns.lineplot(data=melt_df, x="fold_num",
-                           y="value", hue="set")
+                           y="value", style="set")
         _ax.set(xlabel="Fold Number", ylabel="Accuracy",
-                title="Train/Test Accuracy Per Fold")
+                title=experiment)
     plt.show()
 
 

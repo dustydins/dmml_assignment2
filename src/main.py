@@ -60,11 +60,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-tt', '--test-type', dest='test_type',
                     help="0:CROSS VAL, 1:TRAIN/TEST, 2:TRAIN/TEST-4000,\
                     3:TRAIN/TEST-9000",
-                    choices=[0, 1, 2, 3], type=int)
+                    choices=[0, 1, 2, 3], type=int,
+                    required=True)
 parser.add_argument('-c', '--classifier', dest='classifier',
                     help="Select a model to train",
-                    choices=["NN1", "nn1",
-                             "DT1", "dt1"],
                     type=str, required=True)
 parser.add_argument('-nv', '--no-verbose', dest='verbose',
                     help="1(default) for verbosity, 0 otherwise",
@@ -346,7 +345,8 @@ if VISUALISE:
     plot_train_test_acc_loss(acc_per_fold_train,
                              loss_per_fold_train,
                              acc_per_fold_test,
-                             loss_per_fold_test)
+                             loss_per_fold_test,
+                             experiment_str)
 
     # display first 10 images with prediction labels
     show_images(x_test[:10],
