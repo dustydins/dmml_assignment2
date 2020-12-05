@@ -46,12 +46,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # format floats in dataframes to .2f
 pd.options.display.float_format = '{:,.2f}'.format
 
-# random seeds for reproducability
-SEED_VAL = 44
-os.environ['PYTHONHASHEED'] = str(SEED_VAL)
-random.seed(SEED_VAL)
-np.random.seed(SEED_VAL)
-tf.random.set_seed(SEED_VAL)
 
 # ===========================================================
 # PARSE CLI ARGS
@@ -77,6 +71,9 @@ parser.add_argument('-np', '--no-plots', dest='visualise',
 parser.add_argument('-sr', '--save-results', dest='save_results',
                     help="Select a destination to save results.",
                     type=str, default="temp_results")
+parser.add_argument('-rs', '--random-seed', dest='random_seed',
+                    help="Use a random seed",
+                    action="store_true", default=False)
 args = parser.parse_args()
 
 # ===========================================================
@@ -89,6 +86,13 @@ CLF = args.classifier.lower()
 SAVE_MODEL = args.save_model
 SAVE_RESULTS_TO = args.save_results
 VISUALISE = args.visualise
+# random seeds for reproducability
+if not args.random_seed:
+    SEED_VAL = 42
+    os.environ['PYTHONHASHEED'] = str(SEED_VAL)
+    random.seed(SEED_VAL)
+    np.random.seed(SEED_VAL)
+    tf.random.set_seed(SEED_VAL)
 
 # ===========================================================
 # DATA PREPARATION
