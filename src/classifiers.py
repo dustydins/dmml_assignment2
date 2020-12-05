@@ -23,6 +23,9 @@ class Classifiers:
     """
 
     _nn1 = None
+    _nn2 = None
+    _nn3 = None
+    _nn4 = None
     _dt1 = None
 
     # =================================================================
@@ -40,6 +43,48 @@ class Classifiers:
                           loss='sparse_categorical_crossentropy',
                           metrics=['accuracy'])
         return self._nn1
+
+    def compile_nn2(self):
+        """
+        NN2 -
+        """
+        self._nn2 = Sequential()
+        self._nn2.add(Dense(128, activation='relu'))
+        self._nn2.add(Dense(128, activation='relu'))
+        self._nn2.add(Dense(10, activation='softmax'))
+        self._nn2.compile(optimizer='adam',
+                          loss='sparse_categorical_crossentropy',
+                          metrics=['accuracy'])
+        return self._nn2
+
+    def compile_nn3(self):
+        """
+        NN3 -
+        """
+        self._nn3 = Sequential()
+        self._nn3.add(Dense(128, activation='relu'))
+        self._nn3.add(Dense(128, activation='relu'))
+        self._nn3.add(Dense(128, activation='relu'))
+        self._nn3.add(Dense(10, activation='softmax'))
+        self._nn3.compile(optimizer='adam',
+                          loss='sparse_categorical_crossentropy',
+                          metrics=['accuracy'])
+        return self._nn3
+
+    def compile_nn4(self):
+        """
+        NN4 -
+        """
+        self._nn4 = Sequential()
+        self._nn4.add(Dense(128, activation='relu'))
+        self._nn4.add(Dense(128, activation='relu'))
+        self._nn4.add(Dense(128, activation='relu'))
+        self._nn4.add(Dense(128, activation='relu'))
+        self._nn4.add(Dense(10, activation='softmax'))
+        self._nn4.compile(optimizer='adam',
+                          loss='sparse_categorical_crossentropy',
+                          metrics=['accuracy'])
+        return self._nn4
 
     # =================================================================
     # Decision Trees - DT
