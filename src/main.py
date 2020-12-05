@@ -27,6 +27,7 @@ import tensorflow as tf
 from tensorflow.python.keras.engine.sequential import Sequential
 
 from metrics import metrics_from_confusion_matrix
+from metrics import get_epoch_hist_df
 from pretty_format import cprint, print_header, print_div, print_footer
 from data import Data
 from classifiers import Classifiers
@@ -74,6 +75,15 @@ parser.add_argument('-sr', '--save-results', dest='save_results',
 parser.add_argument('-rs', '--random-seed', dest='random_seed',
                     help="Use a random seed",
                     action="store_true", default=False)
+parser.add_argument('-V', '--validation_split', dest='val_split',
+                    help="Set a different validation split",
+                    type=float, default=0.33)
+parser.add_argument('-E', '--epochs', dest='epochs',
+                    help="Set a different number of epochs",
+                    type=int, default=10)
+parser.add_argument('-en', '--experiment-name', dest='experiment',
+                    help="Define a custom experiment name",
+                    type=str, default="n/a")
 args = parser.parse_args()
 
 # ===========================================================
@@ -86,6 +96,12 @@ CLF = args.classifier.lower()
 SAVE_MODEL = args.save_model
 SAVE_RESULTS_TO = args.save_results
 VISUALISE = args.visualise
+VAL_SPLIT = args.val_split
+EPOCHS = args.epochs
+if args.experiment:
+    EXPERIMENT_STR = args.experiment
+else:
+    EXPERIMENT_STR = f"Model: {CLF.upper()} | Test Type: {TEST_TYPE}"
 # random seeds for reproducability
 if not args.random_seed:
     SEED_VAL = 42
@@ -170,6 +186,7 @@ def compile_clf():
 # ===========================================================
 
 # lists to store results
+epoch_hist = []
 acc_per_fold_test = []
 loss_per_fold_test = []
 acc_per_fold_train = []
@@ -210,7 +227,12 @@ for idx, indices in enumerate(data.fold_indices):
     if isinstance(model, Sequential):
 
         # fit model
-        model.fit(x=fold_x_train, y=fold_y_train, epochs=10, verbose=VERBOSE)
+        history = model.fit(x=fold_x_train,
+                            y=fold_y_train,
+                            validation_split=VAL_SPLIT,
+                            epochs=EPOCHS,
+                            verbose=VERBOSE)
+        epoch_hist.append(history)
 
         # evaluate for training and test sets
         test_loss, test_acc = model.evaluate(fold_x_test,
@@ -269,6 +291,38 @@ if SAVE_MODEL and isinstance(model, Sequential):
     model.save(f"../models/{CLF}_{TEST_TYPE}_{timestamp}")
 
 # ===========================================================
+# SAVE RESULTS
+# ===========================================================
+
+# get epoch history
+epoch_hist_dfs = get_epoch_hist_df(epoch_hist, EXPERIMENT_STR)
+
+# get the results as pandas dataframes
+results_df = get_train_test_acc_loss_df(acc_per_fold_train,
+                                        loss_per_fold_train,
+                                        acc_per_fold_test,
+                                        loss_per_fold_test,
+                                        experiment=EXPERIMENT_STR)
+
+# create directory if not already created
+outdir = f"../results/{SAVE_RESULTS_TO}"
+if not os.path.exists(outdir):
+    os.mkdir(outdir)
+
+# save df as printed to terminal
+results_df[0].to_csv(f"{outdir}/per_fold.csv",
+                     mode='a', header=False)
+# save melted df used for some plots
+results_df[1].to_csv(f"{outdir}/per_fold_melted.csv",
+                     mode='a', header=False)
+# save epoch df used for some plots
+epoch_hist_dfs[0].to_csv(f"{outdir}/epoch_hist.csv",
+                         mode='a', header=False)
+# save melted epoch df used for some plots
+epoch_hist_dfs[1].to_csv(f"{outdir}/epoch_hist_melted.csv",
+                         mode='a', header=False)
+
+# ===========================================================
 # DISPLAY RESULTS
 # ===========================================================
 
@@ -313,31 +367,13 @@ cprint(metrics[["Accuracy", "Precision", "Recall"]].mean(axis=0),
        SECTION_COLOUR)
 print_footer(SECTION_COLOUR)
 
-# ===========================================================
-# SAVE RESULTS
-# ===========================================================
-
-# experiment title
-experiment_str = f"Model: {CLF.upper()}, Test Type: {TEST_TYPE}"
-
-# get the results as pandas dataframes
-results_df = get_train_test_acc_loss_df(acc_per_fold_train,
-                                        loss_per_fold_train,
-                                        acc_per_fold_test,
-                                        loss_per_fold_test,
-                                        experiment=experiment_str)
-
-# create directory if not already created
-outdir = f"../results/{SAVE_RESULTS_TO}"
-if not os.path.exists(outdir):
-    os.mkdir(outdir)
-
-# save df as printed to terminal
-results_df[0].to_csv(f"{outdir}/per_fold.csv",
-                     mode='a', header=False)
-# save melted df used for some plots
-results_df[1].to_csv(f"{outdir}/per_fold_melted.csv",
-                     mode='a', header=False)
+# print epoch history
+SECTION_COLOUR = "yellow"
+print_header("EPOCH HISTORY", SECTION_COLOUR)
+cprint(tabulate(epoch_hist_dfs[0],
+                tablefmt='psql',
+                headers='keys'), SECTION_COLOUR)
+print_footer(SECTION_COLOUR)
 
 # ===========================================================
 # VISUALISE
@@ -350,7 +386,7 @@ if VISUALISE:
                              loss_per_fold_train,
                              acc_per_fold_test,
                              loss_per_fold_test,
-                             experiment_str)
+                             EXPERIMENT_STR)
 
     # display first 10 images with prediction labels
     show_images(x_test[:10],

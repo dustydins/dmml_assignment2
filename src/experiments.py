@@ -38,21 +38,32 @@ args = parser.parse_args()
 RESULTS_DIR = f"../results/{args.results_dir}"
 PER_FOLD_CSV = f"{RESULTS_DIR}/per_fold.csv"
 PER_FOLD_MELTED_CSV = f"{RESULTS_DIR}/per_fold_melted.csv"
+EPOCH_HIST_MELTED_CSV = f"{RESULTS_DIR}/epoch_hist_melted.csv"
 
 # ===========================================================
 # LOAD CSV TO DATAFRAME
 # ===========================================================
 
-HEADERS = ["fold_num", "experiment", "variable",
-           "value", "metric", "set"]
+PER_FOLD_HEADERS = ["fold_num", "experiment", "variable",
+                    "value", "metric", "set"]
 
-per_fold_melted_df = pd.read_csv(PER_FOLD_MELTED_CSV, names=HEADERS)
+per_fold_melted_df = pd.read_csv(PER_FOLD_MELTED_CSV,
+                                 names=PER_FOLD_HEADERS)
+
+try:
+    EPOCH_HEADERS = ["epoch", "experiment", "fold_num",
+                     "variable", "value", "metric", "set"]
+    epoch_melted_df = pd.read_csv(EPOCH_HIST_MELTED_CSV,
+                              names=EPOCH_HEADERS)
+except Exception:
+    pass
+    
 
 # ===========================================================
 # VISUALISE
 # ===========================================================
 
-# plot for accuracy
+#  plot for accuracy
 acc_df = per_fold_melted_df[per_fold_melted_df["metric"] == "accuracy"]
 _ax = sns.lineplot(data=acc_df, x="fold_num",
                    y="value", hue="experiment", style="set")
@@ -60,10 +71,40 @@ _ax.set(xlabel="Fold Number", ylabel="Accuracy",
         title="Train/Test Accuracy Per Fold")
 plt.show()
 
-# plot for loss
-loss_df = per_fold_melted_df[per_fold_melted_df["metric"] == "loss"]
-_ax = sns.lineplot(data=loss_df, x="fold_num",
-                   y="value", hue="experiment", style="set")
-_ax.set(xlabel="Fold Number", ylabel="Loss",
-        title="Train/Test Loss Per Fold")
+#  plot accuracy multi-facet
+#  facet = sns.FacetGrid(per_fold_melted_df, col="experiment", row="metric",
+                      #  height=2, aspect=0.75, hue="set",
+                      #  margin_titles=True, sharey=False)
+#  facet.map(sns.lineplot, "fold_num", "value")
+#  facet.add_legend()
+#  plt.show()
+
+
+# Plot the lines on two facets
+#  sns.relplot(
+    #  data=per_fold_melted_df,
+    #  x="fold_num", y="value",
+    #  hue="set", style="metric", col="experiment", col_wrap=2,
+    #  kind="line", style_order=["accuracy", "loss"],
+    #  height=4
+#  )
+#  plt.show()
+
+#  print(epoch_melted_df.head(10))
+sns.relplot(
+    data=epoch_melted_df,
+    x="epoch", y="value",
+    hue="set", style="metric", col="experiment", col_wrap=2,
+    kind="line", style_order=["accuracy", "loss"],
+    height=4
+)
 plt.show()
+
+#  fig = sns.relplot(
+    #  data=per_fold_melted_df,
+    #  x="fold_num", y="value",
+    #  hue="set", col="experiment", row="metric",
+    #  kind="line",
+    #  height=2
+#  )
+#  plt.show()

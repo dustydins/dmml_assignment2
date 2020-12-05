@@ -16,8 +16,7 @@ import seaborn as sns
 from termcolor import colored
 
 from data import Labels
-
-NUM_FOLDS = 10
+from metrics import get_train_test_acc_loss_df
 
 
 def is_unique(column):
@@ -64,51 +63,6 @@ def show_images(images, predictions=None, size=48,
             #  _ax.set_title(predicted, color='red', fontsize=6)
     fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
     plt.show()
-
-
-def get_train_test_acc_loss_df(train_acc, train_loss,
-                               test_acc, test_loss,
-                               experiment="N/A"):
-    """
-    Creates a DataFrame for train/test acc/loss per fold
-    """
-    _df = pd.DataFrame()
-    _df["fold_num"] = list(range(1, NUM_FOLDS+1))
-    if len(train_acc) == NUM_FOLDS:
-        _df["train_acc"] = train_acc
-        _df["train_loss"] = train_loss
-        _df["test_acc"] = test_acc
-        _df["test_loss"] = test_loss
-    else:
-        _df["train_acc"] = [train_acc[0] for idx in range(NUM_FOLDS)]
-        _df["train_loss"] = [train_loss[0] for idx in range(NUM_FOLDS)]
-        _df["test_acc"] = [test_acc[0] for idx in range(NUM_FOLDS)]
-        _df["test_loss"] = [test_loss[0] for idx in range(NUM_FOLDS)]
-    _df["experiment"] = [experiment for idx in range(NUM_FOLDS)]
-
-    # melt and add column for metric used
-    acc_df = _df[["fold_num",
-                  "train_acc",
-                  "test_acc",
-                  "experiment"]].melt(id_vars=["fold_num",
-                                               "experiment"]).copy()
-    acc_df["metric"] = "accuracy"
-    acc_df["value"] = acc_df["value"] / 100
-    loss_df = _df[["fold_num",
-                   "train_loss",
-                   "test_loss",
-                   "experiment"]].melt(id_vars=["fold_num",
-                                                "experiment"]).copy()
-    loss_df["metric"] = "loss"
-    melt_df = pd.concat([acc_df, loss_df])
-
-    # add column for data set used
-    train_df = melt_df[melt_df["variable"].str.contains("train")].copy()
-    train_df["set"] = "train"
-    test_df = melt_df[melt_df["variable"].str.contains("test")].copy()
-    test_df["set"] = "test"
-    melt_df = pd.concat([train_df, test_df])
-    return _df, melt_df, loss_df
 
 
 def print_train_test_acc_loss(train_acc, train_loss,
