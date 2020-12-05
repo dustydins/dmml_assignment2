@@ -66,9 +66,9 @@ def show_images(images, predictions=None, size=48,
     plt.show()
 
 
-def _train_test_acc_loss_df(train_acc, train_loss,
-                            test_acc, test_loss,
-                            model="N/A"):
+def get_train_test_acc_loss_df(train_acc, train_loss,
+                               test_acc, test_loss,
+                               experiment="N/A"):
     """
     Creates a DataFrame for train/test acc/loss per fold
     """
@@ -84,17 +84,21 @@ def _train_test_acc_loss_df(train_acc, train_loss,
         _df["train_loss"] = [train_loss[0] for idx in range(NUM_FOLDS)]
         _df["test_acc"] = [test_acc[0] for idx in range(NUM_FOLDS)]
         _df["test_loss"] = [test_loss[0] for idx in range(NUM_FOLDS)]
-    _df["model"] = [model for idx in range(NUM_FOLDS)]
+    _df["experiment"] = [experiment for idx in range(NUM_FOLDS)]
 
     # melt and add column for metric used
     acc_df = _df[["fold_num",
                   "train_acc",
-                  "test_acc"]].melt(id_vars=["fold_num"]).copy()
+                  "test_acc",
+                  "experiment"]].melt(id_vars=["fold_num",
+                                               "experiment"]).copy()
     acc_df["metric"] = "accuracy"
     acc_df["value"] = acc_df["value"] / 100
     loss_df = _df[["fold_num",
                    "train_loss",
-                   "test_loss"]].melt(id_vars=["fold_num"]).copy()
+                   "test_loss",
+                   "experiment"]].melt(id_vars=["fold_num",
+                                                "experiment"]).copy()
     loss_df["metric"] = "loss"
     melt_df = pd.concat([acc_df, loss_df])
 
@@ -112,13 +116,13 @@ def print_train_test_acc_loss(train_acc, train_loss,
     """
     Prints train/test accuracy and loss for each fold
     """
-    _df = _train_test_acc_loss_df(train_acc, train_loss,
-                                  test_acc, test_loss)
+    _df = get_train_test_acc_loss_df(train_acc, train_loss,
+                                     test_acc, test_loss)
 
     if is_unique(_df[0]["train_acc"]):
-        to_print_df = _df[0].drop(["model"], axis=1).head(1)
+        to_print_df = _df[0].drop(["experiment"], axis=1).head(1)
     else:
-        to_print_df = _df[0].drop(["model"], axis=1)
+        to_print_df = _df[0].drop(["experiment"], axis=1)
 
     print(colored(tabulate(to_print_df, tablefmt='psql',
                            headers='keys'), colour))
@@ -128,8 +132,8 @@ def plot_train_test_acc_loss(train_acc, train_loss, test_acc, test_loss):
     """
     Prints train/test accuracy and loss for each fold
     """
-    _df, melt_df, loss_df = _train_test_acc_loss_df(train_acc, train_loss,
-                                                    test_acc, test_loss)
+    _df, melt_df, loss_df = get_train_test_acc_loss_df(train_acc, train_loss,
+                                                       test_acc, test_loss)
 
     # plot both loss and acc if NN, otherwise just acc
     if not (loss_df["value"] == 0).all():

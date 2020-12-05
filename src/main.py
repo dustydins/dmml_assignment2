@@ -31,6 +31,7 @@ from pretty_format import cprint, print_header, print_div, print_footer
 from data import Data
 from classifiers import Classifiers
 from visualise import show_images
+from visualise import get_train_test_acc_loss_df
 from visualise import plot_train_test_acc_loss
 from visualise import print_train_test_acc_loss
 from visualise import plot_confusion_matrix
@@ -74,6 +75,9 @@ parser.add_argument('-ns', '--no-save', dest='save_model',
 parser.add_argument('-np', '--no-plots', dest='visualise',
                     help="Do not plot results.",
                     action="store_false", default=True)
+parser.add_argument('-sr', '--save-results', dest='save_results',
+                    help="Select a destination to save results.",
+                    type=str, default="temp_results")
 args = parser.parse_args()
 
 # ===========================================================
@@ -84,6 +88,7 @@ VERBOSE = args.verbose
 TEST_TYPE = args.test_type
 CLF = args.classifier.lower()
 SAVE_MODEL = args.save_model
+SAVE_RESULTS_TO = args.save_results
 VISUALISE = args.visualise
 
 # ===========================================================
@@ -304,6 +309,32 @@ cprint("Means:", SECTION_COLOUR)
 cprint(metrics[["Accuracy", "Precision", "Recall"]].mean(axis=0),
        SECTION_COLOUR)
 print_footer(SECTION_COLOUR)
+
+# ===========================================================
+# SAVE RESULTS
+# ===========================================================
+
+# experiment title
+experiment_str = f"Model: {CLF.upper()}, Test Type: {TEST_TYPE}"
+
+# get the results as pandas dataframes
+results_df = get_train_test_acc_loss_df(acc_per_fold_train,
+                                        loss_per_fold_train,
+                                        acc_per_fold_test,
+                                        loss_per_fold_test,
+                                        experiment=experiment_str)
+
+# create directory if not already created
+outdir = f"../results/{SAVE_RESULTS_TO}"
+if not os.path.exists(outdir):
+    os.mkdir(outdir)
+
+# save df as printed to terminal
+results_df[0].to_csv(f"{outdir}/per_fold.csv",
+                     mode='a', header=False)
+# save melted df used for some plots
+results_df[1].to_csv(f"{outdir}/per_fold_melted.csv",
+                     mode='a', header=False)
 
 # ===========================================================
 # VISUALISE
