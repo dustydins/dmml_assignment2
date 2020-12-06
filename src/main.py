@@ -56,10 +56,10 @@ parser.add_argument('-tt', '--test-type', dest='test_type',
                     help="0:CROSS VAL, 1:TRAIN/TEST, 2:TRAIN/TEST-4000,\
                     3:TRAIN/TEST-9000",
                     choices=[0, 1, 2, 3], type=int,
-                    required=True)
+                    default=0)
 parser.add_argument('-c', '--classifier', dest='classifier',
                     help="Select a model to train",
-                    type=str, required=True)
+                    type=str, default="nn")
 parser.add_argument('-nv', '--no-verbose', dest='verbose',
                     help="1(default) for verbosity, 0 otherwise",
                     action="store_false", default=True)
@@ -78,6 +78,15 @@ parser.add_argument('-rs', '--random-seed', dest='random_seed',
 parser.add_argument('-V', '--validation_split', dest='val_split',
                     help="Set a different validation split",
                     type=float, default=0.33)
+parser.add_argument('-LR', '--learning_rate', dest='learning_rate',
+                    help="Set a different learning rate",
+                    type=float, default=0.001)
+parser.add_argument('-NH', '--num_hidden', dest='num_hidden',
+                    help="Set a different number of hidden layers",
+                    type=int, default=2)
+parser.add_argument('-NN', '--num_nodes', dest='num_nodes',
+                    help="Set a different number of nodes per hidden layer",
+                    type=int, default=128)
 parser.add_argument('-E', '--epochs', dest='epochs',
                     help="Set a different number of epochs",
                     type=int, default=10)
@@ -97,6 +106,9 @@ SAVE_MODEL = args.save_model
 SAVE_RESULTS_TO = args.save_results
 VISUALISE = args.visualise
 VAL_SPLIT = args.val_split
+LEARNING_RATE = args.learning_rate
+NUM_HIDDEN = args.num_hidden
+NUM_NODES = args.num_nodes
 EPOCHS = args.epochs
 if args.experiment:
     EXPERIMENT_STR = args.experiment
@@ -178,7 +190,8 @@ def compile_clf():
     Returns a newly compiled version of specified model
     """
     func = getattr(clfs, f"compile_{CLF}")
-    return func()
+    return func(num_hidden=NUM_HIDDEN, num_nodes=NUM_NODES,
+                learning_rate=LEARNING_RATE)
 
 
 # ===========================================================
@@ -297,12 +310,17 @@ if SAVE_MODEL and isinstance(model, Sequential):
 # get epoch history
 epoch_hist_dfs = get_epoch_hist_df(epoch_hist, EXPERIMENT_STR)
 
-# get the results as pandas dataframes
+# get the per fold results as pandas dataframes
 results_df = get_train_test_acc_loss_df(acc_per_fold_train,
                                         loss_per_fold_train,
                                         acc_per_fold_test,
                                         loss_per_fold_test,
                                         experiment=EXPERIMENT_STR)
+
+# get per class results
+conf_matrix = confusion_matrix(y_truths, y_preds)
+per_class_results_df = metrics_from_confusion_matrix(conf_matrix)
+per_class_results_df["experiment"] = EXPERIMENT_STR
 
 # create directory if not already created
 outdir = f"../results/{SAVE_RESULTS_TO}"
@@ -321,12 +339,13 @@ epoch_hist_dfs[0].to_csv(f"{outdir}/epoch_hist.csv",
 # save melted epoch df used for some plots
 epoch_hist_dfs[1].to_csv(f"{outdir}/epoch_hist_melted.csv",
                          mode='a', header=False)
+# save per class metrics df used for some plots
+per_class_results_df.to_csv(f"{outdir}/per_class.csv",
+                            mode='a', header=False)
 
 # ===========================================================
 # DISPLAY RESULTS
 # ===========================================================
-
-conf_matrix = confusion_matrix(y_truths, y_preds)
 
 # print confusion matrix
 SECTION_COLOUR = "yellow"
@@ -355,15 +374,16 @@ print_footer(SECTION_COLOUR)
 # print metrics per class
 SECTION_COLOUR = "cyan"
 print_header("PER CLASS RESULTS", SECTION_COLOUR)
-metrics = metrics_from_confusion_matrix(conf_matrix)
-cprint(tabulate(metrics, tablefmt='psql',
+cprint(tabulate(per_class_results_df, tablefmt='psql',
                 headers='keys'), SECTION_COLOUR)
 print_div(SECTION_COLOUR)
 cprint("Sums:", SECTION_COLOUR)
-cprint(metrics[["TP", "TN", "FP", "FN"]].sum(axis=0), SECTION_COLOUR)
+cprint(per_class_results_df[["TP", "TN",
+                             "FP", "FN"]].sum(axis=0), SECTION_COLOUR)
 print_div(SECTION_COLOUR)
 cprint("Means:", SECTION_COLOUR)
-cprint(metrics[["Accuracy", "Precision", "Recall"]].mean(axis=0),
+cprint(per_class_results_df[["Accuracy", "Precision",
+                             "Recall"]].mean(axis=0),
        SECTION_COLOUR)
 print_footer(SECTION_COLOUR)
 
