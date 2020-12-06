@@ -74,7 +74,7 @@ parser.add_argument('-sr', '--save-results', dest='save_results',
                     type=str, default="temp_results")
 parser.add_argument('-rs', '--random-seed', dest='random_seed',
                     help="Use a random seed",
-                    action="store_true", default=False)
+                    type=int, default=-1)
 parser.add_argument('-V', '--validation_split', dest='val_split',
                     help="Set a different validation split",
                     type=float, default=0.33)
@@ -103,12 +103,11 @@ if args.experiment:
 else:
     EXPERIMENT_STR = f"Model: {CLF.upper()} | Test Type: {TEST_TYPE}"
 # random seeds for reproducability
-if not args.random_seed:
-    SEED_VAL = 42
-    os.environ['PYTHONHASHEED'] = str(SEED_VAL)
-    random.seed(SEED_VAL)
-    np.random.seed(SEED_VAL)
-    tf.random.set_seed(SEED_VAL)
+if args.random_seed != -1:
+    os.environ['PYTHONHASHEED'] = str(args.random_seed)
+    random.seed(args.random_seed)
+    np.random.seed(args.random_seed)
+    tf.random.set_seed(args.random_seed)
 
 # ===========================================================
 # DATA PREPARATION
@@ -116,6 +115,7 @@ if not args.random_seed:
 
 # load data
 data = Data()
+data.df_to_np()
 
 # pre-process
 SECTION_COLOUR = "green"
