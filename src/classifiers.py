@@ -12,8 +12,7 @@ from dataclasses import dataclass
 
 from keras.models import Sequential
 from keras.layers import Dense
-
-from sklearn.tree import DecisionTreeClassifier
+from keras.optimizers import Adam
 
 
 @dataclass
@@ -22,77 +21,44 @@ class Classifiers:
     Data - stores data sets
     """
 
-    _nn1 = None
-    _nn2 = None
-    _nn3 = None
-    _nn4 = None
-    _dt1 = None
+    _nn = None
+    _cnn = None
 
     # =================================================================
-    # Neural Networks - NN
+    # Neural Network - NN
     # =================================================================
 
-    def compile_nn1(self):
+    def compile_nn(self, num_hidden=2, num_nodes=128,
+                   learning_rate=0.001):
         """
-        NN1 - baseline neural network
+        NN - construct a neural network
         """
-        self._nn1 = Sequential()
-        self._nn1.add(Dense(128, activation='relu'))
-        self._nn1.add(Dense(10, activation='softmax'))
-        self._nn1.compile(optimizer='adam',
-                          loss='sparse_categorical_crossentropy',
-                          metrics=['accuracy'])
-        return self._nn1
+        optimiser = Adam(lr=learning_rate)
 
-    def compile_nn2(self):
-        """
-        NN2 -
-        """
-        self._nn2 = Sequential()
-        self._nn2.add(Dense(128, activation='relu'))
-        self._nn2.add(Dense(128, activation='relu'))
-        self._nn2.add(Dense(10, activation='softmax'))
-        self._nn2.compile(optimizer='adam',
-                          loss='sparse_categorical_crossentropy',
-                          metrics=['accuracy'])
-        return self._nn2
-
-    def compile_nn3(self):
-        """
-        NN3 -
-        """
-        self._nn3 = Sequential()
-        self._nn3.add(Dense(128, activation='relu'))
-        self._nn3.add(Dense(128, activation='relu'))
-        self._nn3.add(Dense(128, activation='relu'))
-        self._nn3.add(Dense(10, activation='softmax'))
-        self._nn3.compile(optimizer='adam',
-                          loss='sparse_categorical_crossentropy',
-                          metrics=['accuracy'])
-        return self._nn3
-
-    def compile_nn4(self):
-        """
-        NN4 -
-        """
-        self._nn4 = Sequential()
-        self._nn4.add(Dense(128, activation='relu'))
-        self._nn4.add(Dense(128, activation='relu'))
-        self._nn4.add(Dense(128, activation='relu'))
-        self._nn4.add(Dense(128, activation='relu'))
-        self._nn4.add(Dense(10, activation='softmax'))
-        self._nn4.compile(optimizer='adam',
-                          loss='sparse_categorical_crossentropy',
-                          metrics=['accuracy'])
-        return self._nn4
+        self._nn = Sequential()
+        for _ in range(num_hidden):
+            self._nn.add(Dense(num_nodes, activation='relu'))
+        self._nn.add(Dense(10, activation='softmax'))
+        self._nn.compile(optimizer=optimiser,
+                         loss='sparse_categorical_crossentropy',
+                         metrics=['accuracy'])
+        return self._nn
 
     # =================================================================
-    # Decision Trees - DT
+    # Conv Network - CNN
     # =================================================================
 
-    def compile_dt1(self):
+    def compile_cnn(self, num_hidden=2, num_nodes=128,
+                    learning_rate=0.001):
         """
-        DT1 - baseline decision tree
+        CNN - construct a convolutional neural network
         """
-        self._dt1 = DecisionTreeClassifier(random_state=0, max_depth=2)
-        return self._dt1
+        optimiser = Adam(lr=learning_rate)
+        self._cnn = Sequential()
+        for _ in range(num_hidden):
+            self._cnn.add(Dense(num_nodes, activation='relu'))
+        self._cnn.add(Dense(10, activation='softmax'))
+        self._cnn.compile(optimizer=optimiser,
+                          loss='sparse_categorical_crossentropy',
+                          metrics=['accuracy'])
+        return self._cnn
