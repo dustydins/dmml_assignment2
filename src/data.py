@@ -13,7 +13,6 @@ import enum
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
-from numpy import genfromtxt
 from sklearn.model_selection import KFold
 
 from preprocess import randomise_sets
@@ -57,10 +56,6 @@ class Data:
     y_train = pd.read_csv(Y_TRAIN_SMPL)
     x_test = pd.read_csv(X_TEST_GR_SMPL)
     y_test = pd.read_csv(Y_TEST_SMPL)
-    #  x_train = genfromtxt(X_TRAIN_GR_SMPL, delimiter=',', skip_header=1)
-    #  y_train = genfromtxt(Y_TRAIN_SMPL, delimiter=',', skip_header=1)
-    #  x_test = genfromtxt(X_TEST_GR_SMPL, delimiter=',', skip_header=1)
-    #  y_test = genfromtxt(Y_TEST_SMPL, delimiter=',', skip_header=1)
     fold_indices = [False]
 
     def df_to_np(self):
@@ -80,12 +75,16 @@ class Data:
         self.x_test /= 255
 
     def randomise(self):
-        """ randomises sets"""
+        """
+        randomises sets
+        """
         randomise_sets(self.x_train, self.y_train)
         randomise_sets(self.x_test, self.y_test)
 
     def get_class_sets(self, test=False):
-        """ separates and returns 10 sets for each class"""
+        """
+        separates and returns 10 sets for each class
+        """
         classes = [[], [], [], [], [], [], [], [], [], []]
         data_set = (None, None)
         if test:
