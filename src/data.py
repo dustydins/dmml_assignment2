@@ -12,6 +12,7 @@ Description: Handles loading, processing, & retrieval for
 import enum
 from dataclasses import dataclass
 import numpy as np
+import pandas as pd
 from numpy import genfromtxt
 from sklearn.model_selection import KFold
 
@@ -52,11 +53,24 @@ class Data:
     """
     Data - stores data sets
     """
-    x_train = genfromtxt(X_TRAIN_GR_SMPL, delimiter=',', skip_header=1)
-    y_train = genfromtxt(Y_TRAIN_SMPL, delimiter=',', skip_header=1)
-    x_test = genfromtxt(X_TEST_GR_SMPL, delimiter=',', skip_header=1)
-    y_test = genfromtxt(Y_TEST_SMPL, delimiter=',', skip_header=1)
+    x_train = pd.read_csv(X_TRAIN_GR_SMPL)
+    y_train = pd.read_csv(Y_TRAIN_SMPL)
+    x_test = pd.read_csv(X_TEST_GR_SMPL)
+    y_test = pd.read_csv(Y_TEST_SMPL)
+    #  x_train = genfromtxt(X_TRAIN_GR_SMPL, delimiter=',', skip_header=1)
+    #  y_train = genfromtxt(Y_TRAIN_SMPL, delimiter=',', skip_header=1)
+    #  x_test = genfromtxt(X_TEST_GR_SMPL, delimiter=',', skip_header=1)
+    #  y_test = genfromtxt(Y_TEST_SMPL, delimiter=',', skip_header=1)
     fold_indices = [False]
+
+    def df_to_np(self):
+        """
+        Convert dataframes to np arrays
+        """
+        self.x_train = self.x_train.to_numpy()
+        self.y_train = self.y_train.to_numpy()
+        self.x_test = self.x_test.to_numpy()
+        self.y_test = self.y_test.to_numpy()
 
     def normalise(self):
         """
