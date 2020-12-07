@@ -15,9 +15,9 @@ import pandas as pd
 
 import seaborn as sns
 import matplotlib.pyplot as plt
-#  from tabulate import tabulate
+from tabulate import tabulate
 
-from pretty_format import cprint
+from pretty_format import cprint, print_header, print_footer
 
 # ===========================================================
 # CONFIG
@@ -93,8 +93,38 @@ _ax.set(xlabel="Fold Number", ylabel="Accuracy",
         title="Train/Test Accuracy Per Fold")
 plt.show()
 
-# print differences
-cprint(per_fold_df, "cyan")
+# calculate differences differences
+diff_df = per_fold_df.groupby("experiment", as_index=False).agg(
+    {"train_acc": 'mean',
+     "train_loss": 'mean',
+     "test_acc": 'mean',
+     "test_loss": 'mean'})
+diff_df["accuracy_delta"] = diff_df["test_acc"] - diff_df["train_acc"]
+diff_df["loss_delta"] = diff_df["test_loss"] - diff_df["train_loss"]
+# put metrics on same scale
+diff_df["train_acc"] = diff_df["train_acc"] / 100
+diff_df["test_acc"] = diff_df["test_acc"] / 100
+diff_df["accuracy_delta"] = diff_df["accuracy_delta"] / 100
+
+# print dataframe
+print_header("Mean Accuracy/Loss Per Fold - \
+Training/Test Set for each Experiment, with Deltas", "yellow")
+cprint(tabulate(diff_df,
+                tablefmt="psql",
+                headers="keys"), "yellow")
+print_footer("yellow")
+
+# plot horizontal bar plot of diffs
+melted_diff_df = diff_df[["experiment", "accuracy_delta",
+                          "loss_delta"]].melt(id_vars=["experiment"])
+_ax = sns.catplot(data=melted_diff_df,
+                  kind="bar",
+                  x="value",
+                  y="experiment",
+                  hue="variable")
+_ax.set_axis_labels("Difference (Test - Training)", "Experiment")
+_ax.despine(bottom=True)
+plt.show()
 
 # ===========================================================
 # VISUALISE - PER CLASS

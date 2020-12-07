@@ -11,7 +11,7 @@ Description: Collection of classifiers and methods to compile them
 from dataclasses import dataclass
 
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Conv2D, Flatten, MaxPooling2D
 from keras.optimizers import Adam
 
 
@@ -55,6 +55,13 @@ class Classifiers:
         """
         optimiser = Adam(lr=learning_rate)
         self._cnn = Sequential()
+
+        self._cnn.add(Conv2D(64, kernel_size=3, activation='relu',
+                             input_shape=(48, 48, 1)))
+        self._cnn.add(Conv2D(64, kernel_size=3, activation='relu'))
+        self._cnn.add(MaxPooling2D(2, 2))
+        self._cnn.add(Flatten())
+        # finish with fully connected layers
         for _ in range(num_hidden):
             self._cnn.add(Dense(num_nodes, activation='relu'))
         self._cnn.add(Dense(10, activation='softmax'))

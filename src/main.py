@@ -10,6 +10,7 @@ Description: Takes arguments from CLI, runs an experiment according
 """
 
 import os
+import math
 import random
 from datetime import datetime
 import argparse
@@ -31,6 +32,7 @@ from metrics import get_epoch_hist_df
 from pretty_format import cprint, print_header, print_div, print_footer
 from data import Data
 from classifiers import Classifiers
+from preprocess import data_augmentation
 from visualise import show_images
 from visualise import get_train_test_acc_loss_df
 from visualise import plot_train_test_acc_loss
@@ -93,6 +95,9 @@ parser.add_argument('-E', '--epochs', dest='epochs',
 parser.add_argument('-en', '--experiment-name', dest='experiment',
                     help="Define a custom experiment name",
                     type=str, default="n/a")
+parser.add_argument('-da', '--data-aug', dest='data_aug',
+                    help="Proportion of training set to augment",
+                    type=float, default=-1.0)
 args = parser.parse_args()
 
 # ===========================================================
@@ -110,6 +115,7 @@ LEARNING_RATE = args.learning_rate
 NUM_HIDDEN = args.num_hidden
 NUM_NODES = args.num_nodes
 EPOCHS = args.epochs
+DATA_AUG = args.data_aug
 if args.experiment:
     EXPERIMENT_STR = args.experiment
 else:
@@ -212,6 +218,7 @@ FOLD_NUM = 1
 model = compile_clf()
 SECTION_COLOUR = "blue"
 print_header("RUNNING CLASSIFIER", SECTION_COLOUR)
+# for each fold in data fold indicies
 for idx, indices in enumerate(data.fold_indices):
     # ---------------------------------------------------------------------------
     # SETUP TRAINING AND TEST SET
@@ -232,55 +239,54 @@ for idx, indices in enumerate(data.fold_indices):
     else:
         continue
 
+    # reshape if cnn
+    if "cnn" in CLF:
+        fold_x_train = fold_x_train.reshape(fold_x_train.shape[0],
+                                            48, 48, 1)
+        fold_x_test = fold_x_test.reshape(fold_x_test.shape[0],
+                                          48, 48, 1)
+
+    # ---------------------------------------------------------------------------
+    # PREP & FIT
+    # ---------------------------------------------------------------------------
+
     model = compile_clf()
 
-    # ---------------------------------------------------------------------------
-    # IF NEURAL NETWORK
-    # ---------------------------------------------------------------------------
-    if isinstance(model, Sequential):
+    # apply data augmentation
+    if DATA_AUG > 0:
+        original_shape = fold_x_train.shape
+        fold_x_train = fold_x_train.reshape(fold_x_train.shape[0],
+                                            48, 48, 1)
+        data_aug = data_augmentation(fold_x_train, validation_split=VAL_SPLIT)
+        batch_size = math.floor(original_shape[0]*DATA_AUG)
+        for img in range(batch_size):
+            data_aug.random_transform(fold_x_train[idx])
+        fold_x_train = fold_x_train.reshape(original_shape)
 
-        # fit model
-        history = model.fit(x=fold_x_train,
-                            y=fold_y_train,
-                            validation_split=VAL_SPLIT,
-                            epochs=EPOCHS,
-                            verbose=VERBOSE)
-        epoch_hist.append(history)
-
-        # evaluate for training and test sets
-        test_loss, test_acc = model.evaluate(fold_x_test,
-                                             fold_y_test,
-                                             verbose=0)
-        train_loss, train_acc = model.evaluate(fold_x_train,
-                                               fold_y_train,
-                                               verbose=0)
-        loss_per_fold_test.append(test_loss)
-        acc_per_fold_test.append(test_acc * 100)
-        loss_per_fold_train.append(train_loss)
-        acc_per_fold_train.append(train_acc * 100)
-
-        # predictions
-        fold_probs = model.predict(fold_x_test)
-        fold_preds = [np.argmax(instance) for instance in fold_probs]
+    history = model.fit(x=fold_x_train,
+                        y=fold_y_train,
+                        validation_split=VAL_SPLIT,
+                        epochs=EPOCHS,
+                        verbose=VERBOSE)
+    epoch_hist.append(history)
 
     # ---------------------------------------------------------------------------
-    # IF DECISION TREE
+    # EVALUATE FOR TRAINING AND TEST SETS
     # ---------------------------------------------------------------------------
-    elif isinstance(model, DecisionTreeClassifier):
+    test_loss, test_acc = model.evaluate(fold_x_test,
+                                         fold_y_test,
+                                         verbose=0)
+    train_loss, train_acc = model.evaluate(fold_x_train,
+                                           fold_y_train,
+                                           verbose=0)
+    loss_per_fold_test.append(test_loss)
+    acc_per_fold_test.append(test_acc * 100)
+    loss_per_fold_train.append(train_loss)
+    acc_per_fold_train.append(train_acc * 100)
 
-        # fit model
-        model.fit(fold_x_train, fold_y_train)
-
-        # evaluate on train and test sets
-        test_acc = model.score(fold_x_test, fold_y_test)
-        train_acc = model.score(fold_x_train, fold_y_train)
-        acc_per_fold_test.append(test_acc * 100)
-        acc_per_fold_train.append(train_acc * 100)
-        loss_per_fold_test.append(0)
-        loss_per_fold_train.append(0)
-
-        # predictions
-        fold_preds = model.predict(fold_x_test)
+    # predictions
+    fold_probs = model.predict(fold_x_test)
+    fold_preds = [np.argmax(instance) for instance in fold_probs]
 
     # ---------------------------------------------------------------------------
     # STORE PREDICTIONS
