@@ -39,12 +39,17 @@ parser.add_argument('-l', '--load-csv', dest='results_dir',
 parser.add_argument('-s', '--sort', dest='sort',
                     help="Sort dataframes by experiment column",
                     action="store_true", default=False)
+parser.add_argument('-sb', '--show-baseline', dest='baseline',
+                    help="Show baseline alongside experiment",
+                    action="store_true", default=False)
 args = parser.parse_args()
 
+BASELINE = args.baseline
 RESULTS_DIR = f"../results/{args.results_dir}"
 PER_FOLD_CSV = f"{RESULTS_DIR}/per_fold.csv"
 PER_FOLD_MELTED_CSV = f"{RESULTS_DIR}/per_fold_melted.csv"
 PER_CLASS_CSV = f"{RESULTS_DIR}/per_class.csv"
+BASELINE_CLASS_CSV = "../results/baseline/per_class.csv"
 EPOCH_HIST_MELTED_CSV = f"{RESULTS_DIR}/epoch_hist_melted.csv"
 SORT = args.sort
 
@@ -58,21 +63,28 @@ try:
 
     per_fold_df = pd.read_csv(PER_FOLD_CSV,
                               names=PER_FOLD_HEADERS)
+    per_fold_df["experiment"] = per_fold_df["experiment"].replace("NO_GENERATIONK", "CONTROL")
 
     PER_FOLD_MELTED_HEADERS = ["fold_num", "experiment", "variable",
                                "value", "metric", "set"]
 
     per_fold_melted_df = pd.read_csv(PER_FOLD_MELTED_CSV,
                                      names=PER_FOLD_MELTED_HEADERS)
+    per_fold_melted_df["experiment"] = per_fold_melted_df["experiment"].replace("NO_GENERATIONK", "CONTROL")
 
     EPOCH_HEADERS = ["epoch", "experiment", "fold_num",
                      "variable", "value", "metric", "set"]
     epoch_melted_df = pd.read_csv(EPOCH_HIST_MELTED_CSV,
                                   names=EPOCH_HEADERS)
+    epoch_melted_df["experiment"] = epoch_melted_df["experiment"].replace("NO_GENERATIONK", "CONTROL")
 
     PER_CLASS_HEADERS = ["TP", "TN", "FP", "FN", "Accuracy",
                          "Precision", "Recall", "Label", "experiment"]
     per_class_df = pd.read_csv(PER_CLASS_CSV, names=PER_CLASS_HEADERS)
+    if BASELINE:
+        baseline_class_df = pd.read_csv(BASELINE_CLASS_CSV,
+                                        names=PER_CLASS_HEADERS)
+        per_class_df = pd.concat([baseline_class_df, per_class_df])
 
 except IOError as exc:
     print(exc)
@@ -85,16 +97,16 @@ if SORT:
 # VISUALISE - PER FOLD
 # ===========================================================
 
-#  plot for accuracy
-acc_df = per_fold_melted_df[per_fold_melted_df["metric"] == "accuracy"]
-_ax = sns.lineplot(data=acc_df, x="fold_num",
+#  plot for loss
+loss_df = per_fold_melted_df[per_fold_melted_df["metric"] == "loss"]
+_ax = sns.lineplot(data=loss_df, x="fold_num",
                    y="value", hue="experiment", style="set")
-_ax.set(xlabel="Fold Number", ylabel="Accuracy",
-        title="Train/Test Accuracy Per Fold")
+_ax.set(xlabel="Fold Number", ylabel="Loss",
+        title="Train/Test Loss Per Fold")
 plt.show()
 
 # calculate differences differences
-diff_df = per_fold_df.groupby("experiment", as_index=False).agg(
+diff_df = per_fold_df.groupby("experiment", as_index=False, sort=False).agg(
     {"train_acc": 'mean',
      "train_loss": 'mean',
      "test_acc": 'mean',
@@ -124,6 +136,13 @@ _ax = sns.catplot(data=melted_diff_df,
                   hue="variable")
 _ax.set_axis_labels("Difference (Test - Training)", "Experiment")
 _ax.despine(bottom=True)
+plt.show()
+
+# for single config plots
+_ax = sns.lineplot(data=per_fold_melted_df, x="fold_num",
+                   y="value", hue="metric", style="set")
+_ax.set(xlabel="Fold Number", ylabel="Metric Value",
+        title="experiment")
 plt.show()
 
 # ===========================================================

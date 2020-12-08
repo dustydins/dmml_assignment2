@@ -10,7 +10,6 @@ Description: Takes arguments from CLI, runs an experiment according
 """
 
 import os
-import math
 import random
 from datetime import datetime
 import argparse
@@ -97,7 +96,7 @@ parser.add_argument('-en', '--experiment-name', dest='experiment',
                     type=str, default="n/a")
 parser.add_argument('-da', '--data-aug', dest='data_aug',
                     help="Proportion of training set to augment",
-                    type=float, default=-1.0)
+                    type=int, default=-1)
 args = parser.parse_args()
 
 # ===========================================================
@@ -133,10 +132,20 @@ if args.random_seed != -1:
 
 # load data
 data = Data()
-data.df_to_np()
+
+# generate data and convert to numpy array
+SECTION_COLOUR = "green"
+if DATA_AUG > 0:
+    print_header("PREPROCESSING", SECTION_COLOUR)
+    cprint("BALANCING TRAINING SET VIA AUGMENTATION", SECTION_COLOUR)
+    TEST_TYPE = 0
+    data.generate_data(rot=DATA_AUG)
+    print_footer(SECTION_COLOUR)
+else:
+    # convert to numpy arrays
+    data.df_to_np()
 
 # pre-process
-SECTION_COLOUR = "green"
 print_header("PREPROCESSING", SECTION_COLOUR)
 cprint("Normalising data from 0-255 to 0-1.", SECTION_COLOUR)
 data.normalise()
@@ -225,14 +234,14 @@ for idx, indices in enumerate(data.fold_indices):
     # ---------------------------------------------------------------------------
     if not data.fold_indices[0]:
         # if not cross validation, just use train/test sets
-        fold_x_train = data.x_train
+        fold_x_train = data.x_train.copy()
         fold_y_train = data.y_train
         fold_x_test = data.x_test
         fold_y_test = data.y_test
     elif idx != 0:
         # if cross validation, use indices to create new train/test sets
         print_header(f"FOLD: {FOLD_NUM}", SECTION_COLOUR)
-        fold_x_train = data.x_train[indices[0]]
+        fold_x_train = data.x_train[indices[0]].copy()
         fold_x_test = data.x_train[indices[1]]
         fold_y_train = data.y_train[indices[0]]
         fold_y_test = data.y_train[indices[1]]
@@ -251,17 +260,6 @@ for idx, indices in enumerate(data.fold_indices):
     # ---------------------------------------------------------------------------
 
     model = compile_clf()
-
-    # apply data augmentation
-    if DATA_AUG > 0:
-        original_shape = fold_x_train.shape
-        fold_x_train = fold_x_train.reshape(fold_x_train.shape[0],
-                                            48, 48, 1)
-        data_aug = data_augmentation(fold_x_train, validation_split=VAL_SPLIT)
-        batch_size = math.floor(original_shape[0]*DATA_AUG)
-        for img in range(batch_size):
-            data_aug.random_transform(fold_x_train[idx])
-        fold_x_train = fold_x_train.reshape(original_shape)
 
     history = model.fit(x=fold_x_train,
                         y=fold_y_train,
@@ -353,6 +351,19 @@ per_class_results_df.to_csv(f"{outdir}/per_class.csv",
 # DISPLAY RESULTS
 # ===========================================================
 
+# print model
+SECTION_COLOUR = "white"
+print_header("SUMMARY OF EXPERIMENT", SECTION_COLOUR)
+cprint(f"Classifier: {CLF.upper()}", SECTION_COLOUR)
+cprint(f"Test Type: {TEST_TYPE}", SECTION_COLOUR)
+cprint("Optimiser: Adam", SECTION_COLOUR)
+cprint(f"Validation Split: {VAL_SPLIT}", SECTION_COLOUR)
+cprint(f"Num Epochs: {EPOCHS}", SECTION_COLOUR)
+cprint("Loss: Sparse Categorical Cross Entropy", SECTION_COLOUR)
+cprint(f"Data Augmentation: {DATA_AUG}", SECTION_COLOUR)
+cprint(model.summary(), SECTION_COLOUR)
+print_footer(SECTION_COLOUR)
+
 # print confusion matrix
 SECTION_COLOUR = "yellow"
 print_header("CONFUSION MATRIX", SECTION_COLOUR)
@@ -391,14 +402,6 @@ cprint("Means:", SECTION_COLOUR)
 cprint(per_class_results_df[["Accuracy", "Precision",
                              "Recall"]].mean(axis=0),
        SECTION_COLOUR)
-print_footer(SECTION_COLOUR)
-
-# print epoch history
-SECTION_COLOUR = "yellow"
-print_header("EPOCH HISTORY", SECTION_COLOUR)
-cprint(tabulate(epoch_hist_dfs[0],
-                tablefmt='psql',
-                headers='keys'), SECTION_COLOUR)
 print_footer(SECTION_COLOUR)
 
 # ===========================================================

@@ -92,18 +92,10 @@ def plot_train_test_acc_loss(train_acc, train_loss,
                                                        test_acc, test_loss,
                                                        experiment)
 
-    # plot both loss and acc if NN, otherwise just acc
-    if not (loss_df["value"] == 0).all():
-        _ax = sns.lineplot(data=melt_df, x="fold_num",
-                           y="value", hue="metric", style="set")
-        _ax.set(xlabel="Fold Number", ylabel="Metric Value",
-                title=experiment)
-    else:
-        melt_df = melt_df[melt_df["metric"] == "accuracy"]
-        _ax = sns.lineplot(data=melt_df, x="fold_num",
-                           y="value", style="set")
-        _ax.set(xlabel="Fold Number", ylabel="Accuracy",
-                title=experiment)
+    _ax = sns.lineplot(data=melt_df, x="fold_num",
+                       y="value", hue="metric", style="set")
+    _ax.set(xlabel="Fold Number", ylabel="Metric Value",
+            title=experiment)
     plt.show()
 
 
